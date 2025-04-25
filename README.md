@@ -1,3 +1,5 @@
+![Image](https://github.com/user-attachments/assets/0f6de833-16d6-4cea-8968-7ce4e6de3a50)
+
 # Unics Operating System
 
 Unics is a POSIX-compliant, Unix-like operating system inspired by BSD, designed to run on the i386 architecture. It aims to provide a lightweight, efficient, and educational platform for understanding low-level system concepts and kernel development. Unics includes a small `libc` for basic system functionality and uses the GRUB bootloader for boot management.
