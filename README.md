@@ -1,4 +1,4 @@
-![Image](https://github.com/user-attachments/assets/0f6de833-16d6-4cea-8968-7ce4e6de3a50)
+![Image](https://github.com/user-attachments/assets/066bb4a8-a77d-4af8-9713-1c12a5bad717)
 
 # Unics Operating System
 
