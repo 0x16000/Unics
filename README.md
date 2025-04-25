@@ -65,7 +65,7 @@ To build and run Unics:
    cd Unics
 
 2. Build the system:
-   Make sure you have the necessary tools installed (such as gcc, make, qemu for virtualization, and grub for bootloader):
+   Make sure you have the necessary tools installed (such as `gcc`, `make`, `qemu` for virtualization, and `grub` for bootloader):
    ```bash
    make
 
