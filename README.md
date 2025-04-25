@@ -13,7 +13,7 @@ Unics is a POSIX-compliant, Unix-like operating system inspired by BSD, designed
 - Simple, low-level kernel built for the i386 architecture.
 - Uses the **GRUB bootloader** for system booting.
 - Focus on simplicity, clarity, and performance.
-- Bootloader with a `boot>` prompt for a unique experience.
+- Bootloader with a `boot>` prompt.
 - Minimalist design for learning and experimentation.
 
 ## Architecture
