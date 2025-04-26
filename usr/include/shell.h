@@ -53,5 +53,6 @@ extern int rand_main(int argc, char **argv);
 extern int factor_main(int argc, char **argv);
 extern int tty_main(int argc, char **argv);
 extern int cpuinfo_main(int argc, char **argv);
+extern int fetch_main(int argc, char **argv);
 
 #endif // SHELL_H

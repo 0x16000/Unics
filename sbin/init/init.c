@@ -26,14 +26,35 @@ int main(void) {
     // Initialize VGA text mode
     vga_initialize();
     vga_disable_cursor();
-    vga_set_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
     vga_clear();
+
+    // Print header
     vga_puts(">> Unics/i386");
-    vga_puts_at("boot> \n", 0, 1);
+
+    // boot> prompt at (0,1)
+    vga_puts_at("boot> ", 0, 1);
+    delay(10000);
+    vga_puts_at("entry point at 0xC0000000", 0, 2); // Default Modern Kernel Operating System hex value 32-bit
+
+    // Kernel output text color: White on blue
+    vga_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
+
+    // boot info
+    delay(100000);
+    vga_puts_at("Firmware boot", 0, 3);
+    delay(150000);
+    vga_puts_at("i386 functional", 0, 4);
+    delay(100000);
+    vga_puts_at("Copyright (c) 2025 0x16000. All rights reserved.", 0, 5);
+
     vga_enable_cursor();
-    vga_update_cursor(6, 1);
-    delay(200000); // ~2 second delay
-    vga_clear();
+    vga_update_cursor(0, 3); // Move cursor to start of line 3
+
+    delay(200000); // Pause for ~2 seconds to show boot info
+
+    // Switch back to normal text color (light grey on black)
+    vga_set_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+    vga_clear(); // Clear screen with the new color (black background)
 
     // Initialize CPU features
     early_cpu_init();

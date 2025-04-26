@@ -38,6 +38,7 @@ shell_command_t shell_commands[] = {
     {"factor",   "Display prime factor of a number", factor_main},
     {"tty",      "Print console session", tty_main},
     {"cpuinfo",  "Print Processor information", cpuinfo_main},
+    {"fetch",    "Fetch OS information", fetch_main},
 };
 
 // External reference for the command count

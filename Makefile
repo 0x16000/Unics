@@ -42,6 +42,7 @@ KERNEL_SRCS = \
     bin/factor.c \
     bin/tty.c \
     bin/cpuinfo.c \
+    bin/fetch.c \
     bin/expr.c
 
 ASM_SRCS = $(BOOT_SRC) arch/i386/cpu.s  # Added cpu.s here

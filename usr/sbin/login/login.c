@@ -3,6 +3,7 @@
 #include <vga.h>
 #include <keyboard.h>
 #include <stdio.h>
+#include <vers.h>
 
 static void clear_input_buffer(char* buffer, size_t size) {
     memset(buffer, 0, size);
@@ -75,7 +76,9 @@ bool login_authenticate(void) {
 }
 
 void login_prompt(void) {
-    printf("Copyright (c) 2025 0x16000. All rights reserved.\n\n");
+    printf("Welcome to the Unics ");
+    printf(OS_VERSION);
+    printf(" Operating System\n\n");
 
     if (!login_authenticate()) {
         printf("Maximum login attempts reached. Halting.\n");
