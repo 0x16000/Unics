@@ -37,6 +37,8 @@ static void print_cpu_brand() {
 }
 
 int fetch_main(int argc, char **argv) {
+    (void)argc; // Suppress unused parameter warnings
+    (void)argv; // Suppress unused parameter warnings
     printf("    ,        ,        /unics$\n");
     printf("   /(        )`       -------\n");
     printf("   \\ \\___   / |       Kernel: ");
