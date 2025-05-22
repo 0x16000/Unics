@@ -40,6 +40,10 @@ typedef signed long     int64_t;
 typedef unsigned long   size_t;
 #endif
 
+#ifndef wchar_t
+typedef unsigned int wchar_t;
+#endif
+
 #ifndef ptrdiff_t
 typedef int             ptrdiff_t;
 #endif

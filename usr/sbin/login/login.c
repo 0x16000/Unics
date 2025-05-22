@@ -33,7 +33,6 @@ char* login_get_username(char* buffer, size_t size) {
 
 char* login_get_password(char* buffer, size_t size) {
     printf("password: ");
-    vga_disable_cursor(); // Disable cursor at the start of password input
     size_t pos = 0;
     clear_input_buffer(buffer, size);
 
@@ -49,7 +48,6 @@ char* login_get_password(char* buffer, size_t size) {
             vga_puts("\b \b");
         } else if (pos < size - 1 && c >= 32 && c <= 126) {
             buffer[pos++] = c;
-            vga_putchar(' '); // Show spaces instead of asterisks
         }
     }
 }
