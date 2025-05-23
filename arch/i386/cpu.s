@@ -406,3 +406,5 @@ cpu_get_flags:
     pushfd
     pop eax
     ret
+
+section .note.GNU-stack noalloc noexec nowrite progbits
