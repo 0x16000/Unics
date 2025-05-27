@@ -1,216 +1,197 @@
 #ifndef _STDINT_H
-#define _STDINT_H
+#define _STDINT_H 1
 
-/* Define fixed-width integer types */
-#ifndef _UINT8_T
-#define _UINT8_T
-typedef unsigned char uint8_t;    /* 8-bit unsigned integer */
-#endif
-
-#ifndef _INT8_T
-#define _INT8_T
-typedef signed char int8_t;       /* 8-bit signed integer */
+/* Prevent C++ name mangling */
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#ifndef _UINT16_T
-#define _UINT16_T
-typedef unsigned short uint16_t;  /* 16-bit unsigned integer */
+/* GCC specific attributes */
+#ifdef __GNUC__
+    #define _INT_UNUSED __attribute__((unused))
+    #define _INT_PACKED __attribute__((packed))
+    #define _INT_ALIGNED(x) __attribute__((aligned(x)))
+#else
+    #define _INT_UNUSED
+    #define _INT_PACKED
+    #define _INT_ALIGNED(x)
 #endif
 
-#ifndef _INT16_T
-#define _INT16_T
-typedef signed short int16_t;     /* 16-bit signed integer */
-#endif
+/* Exact-width integer types */
+typedef signed char        int8_t;
+typedef unsigned char      uint8_t;
+typedef signed short      int16_t;
+typedef unsigned short    uint16_t;
+typedef signed int        int32_t;
+typedef unsigned int      uint32_t;
+typedef signed long long  int64_t;
+typedef unsigned long long uint64_t;
 
-#ifndef _UINT32_T
-#define _UINT32_T
-typedef unsigned int uint32_t;    /* 32-bit unsigned integer */
-#endif
+/* Verify sizes at compile time */
+_Static_assert(sizeof(int8_t)  == 1, "int8_t must be 1 byte");
+_Static_assert(sizeof(uint8_t) == 1, "uint8_t must be 1 byte");
+_Static_assert(sizeof(int16_t) == 2, "int16_t must be 2 bytes");
+_Static_assert(sizeof(uint16_t)== 2, "uint16_t must be 2 bytes");
+_Static_assert(sizeof(int32_t) == 4, "int32_t must be 4 bytes");
+_Static_assert(sizeof(uint32_t)== 4, "uint32_t must be 4 bytes");
+_Static_assert(sizeof(int64_t) == 8, "int64_t must be 8 bytes");
+_Static_assert(sizeof(uint64_t)== 8, "uint64_t must be 8 bytes");
 
-#ifndef _INT32_T
-#define _INT32_T
-typedef signed int int32_t;       /* 32-bit signed integer */
-#endif
+/* Minimum-width integer types */
+typedef int8_t    int_least8_t;
+typedef uint8_t   uint_least8_t;
+typedef int16_t   int_least16_t;
+typedef uint16_t  uint_least16_t;
+typedef int32_t   int_least32_t;
+typedef uint32_t  uint_least32_t;
+typedef int64_t   int_least64_t;
+typedef uint64_t  uint_least64_t;
 
-#ifndef _UINT64_T
-#define _UINT64_T
-typedef unsigned long uint64_t;   /* 64-bit unsigned integer */
-#endif
+/* Fastest minimum-width integer types */
+typedef int32_t   int_fast8_t;
+typedef uint32_t  uint_fast8_t;
+typedef int32_t   int_fast16_t;
+typedef uint32_t  uint_fast16_t;
+typedef int32_t   int_fast32_t;
+typedef uint32_t  uint_fast32_t;
+typedef int64_t   int_fast64_t;
+typedef uint64_t  uint_fast64_t;
 
-#ifndef _INT64_T
-#define _INT64_T
-typedef signed long int64_t;      /* 64-bit signed integer */
-#endif
+/* Integer type capable of holding object pointers */
+typedef int32_t   intptr_t;
+typedef uint32_t  uintptr_t;
 
-/* Integer types for specific widths */
-#ifndef _UINTPTR_T
-#define _UINTPTR_T
-typedef unsigned long uintptr_t;  /* Unsigned integer for pointer size */
-#endif
+/* Greatest-width integer types */
+typedef int64_t   intmax_t;
+typedef uint64_t  uintmax_t;
 
-#ifndef _INTPTR_T
-#define _INTPTR_T
-typedef signed long intptr_t;     /* Signed integer for pointer size */
-#endif
-
-/* Integer types for specific width sizes */
-#ifndef _INTMAX_T
-#define _INTMAX_T
-typedef long long int intmax_t;   /* Maximum width signed integer */
-#endif
-
-#ifndef _UINTMAX_T
-#define _UINTMAX_T
-typedef unsigned long long uintmax_t; /* Maximum width unsigned integer */
-#endif
-
-/* Define "fast" integer types */
-#ifndef _FAST8_T
-#define _FAST8_T
-typedef int int_fast8_t;   /* Fast 8-bit signed integer (use int) */
-#endif
-
-#ifndef _FAST16_T
-#define _FAST16_T
-typedef int int_fast16_t;  /* Fast 16-bit signed integer (use int) */
-#endif
-
-#ifndef _FAST32_T
-#define _FAST32_T
-typedef int int_fast32_t;  /* Fast 32-bit signed integer (use int) */
-#endif
-
-#ifndef _FAST64_T
-#define _FAST64_T
-typedef long int int_fast64_t;  /* Fast 64-bit signed integer (use long) */
-#endif
-
-#ifndef _UINT_FAST8_T
-#define _UINT_FAST8_T
-typedef unsigned int uint_fast8_t;  /* Fast 8-bit unsigned integer (use unsigned int) */
-#endif
-
-#ifndef _UINT_FAST16_T
-#define _UINT_FAST16_T
-typedef unsigned int uint_fast16_t;  /* Fast 16-bit unsigned integer (use unsigned int) */
-#endif
-
-#ifndef _UINT_FAST32_T
-#define _UINT_FAST32_T
-typedef unsigned int uint_fast32_t;  /* Fast 32-bit unsigned integer (use unsigned int) */
-#endif
-
-#ifndef _UINT_FAST64_T
-#define _UINT_FAST64_T
-typedef unsigned long int uint_fast64_t;  /* Fast 64-bit unsigned integer (use unsigned long) */
-#endif
-
-/* Integer types for minimum width */
-#ifndef _INTLEAST8_T
-#define _INTLEAST8_T
-typedef signed char int_least8_t;   /* Least width signed 8-bit integer */
-#endif
-
-#ifndef _UINTLEAST8_T
-#define _UINTLEAST8_T
-typedef unsigned char uint_least8_t;   /* Least width unsigned 8-bit integer */
-#endif
-
-#ifndef _INTLEAST16_T
-#define _INTLEAST16_T
-typedef signed short int_least16_t;  /* Least width signed 16-bit integer */
-#endif
-
-#ifndef _UINTLEAST16_T
-#define _UINTLEAST16_T
-typedef unsigned short uint_least16_t;  /* Least width unsigned 16-bit integer */
-#endif
-
-#ifndef _INTLEAST32_T
-#define _INTLEAST32_T
-typedef signed int int_least32_t;   /* Least width signed 32-bit integer */
-#endif
-
-#ifndef _UINTLEAST32_T
-#define _UINTLEAST32_T
-typedef unsigned int uint_least32_t;   /* Least width unsigned 32-bit integer */
-#endif
-
-#ifndef _INTLEAST64_T
-#define _INTLEAST64_T
-typedef signed long int_least64_t;  /* Least width signed 64-bit integer */
-#endif
-
-#ifndef _UINTLEAST64_T
-#define _UINTLEAST64_T
-typedef unsigned long uint_least64_t;  /* Least width unsigned 64-bit integer */
-#endif
-
-/* Limits */
-#ifndef INT8_MAX
-#define INT8_MAX  127
-#endif
-#ifndef INT8_MIN
-#define INT8_MIN  (-128)
-#endif
-#ifndef UINT8_MAX
+/* Limits of exact-width integer types */
+#define INT8_MIN   (-128)
+#define INT8_MAX   127
 #define UINT8_MAX  255
-#endif
 
-#ifndef INT16_MAX
-#define INT16_MAX  32767
-#endif
-#ifndef INT16_MIN
 #define INT16_MIN  (-32768)
-#endif
-#ifndef UINT16_MAX
-#define UINT16_MAX  65535
-#endif
+#define INT16_MAX  32767
+#define UINT16_MAX 65535
 
-#ifndef INT32_MAX
-#define INT32_MAX  2147483647
-#endif
-#ifndef INT32_MIN
 #define INT32_MIN  (-2147483648)
-#endif
-#ifndef UINT32_MAX
-#define UINT32_MAX  4294967295U
-#endif
+#define INT32_MAX  2147483647
+#define UINT32_MAX 4294967295U
 
-#ifndef INT64_MAX
-#define INT64_MAX  9223372036854775807LL
-#endif
-#ifndef INT64_MIN
 #define INT64_MIN  (-9223372036854775808LL)
-#endif
-#ifndef UINT64_MAX
-#define UINT64_MAX  18446744073709551615ULL
+#define INT64_MAX  9223372036854775807LL
+#define UINT64_MAX 18446744073709551615ULL
+
+/* Limits of minimum-width integer types */
+#define INT_LEAST8_MIN   INT8_MIN
+#define INT_LEAST8_MAX   INT8_MAX
+#define UINT_LEAST8_MAX  UINT8_MAX
+
+#define INT_LEAST16_MIN  INT16_MIN
+#define INT_LEAST16_MAX  INT16_MAX
+#define UINT_LEAST16_MAX UINT16_MAX
+
+#define INT_LEAST32_MIN  INT32_MIN
+#define INT_LEAST32_MAX  INT32_MAX
+#define UINT_LEAST32_MAX UINT32_MAX
+
+#define INT_LEAST64_MIN  INT64_MIN
+#define INT_LEAST64_MAX  INT64_MAX
+#define UINT_LEAST64_MAX UINT64_MAX
+
+/* Limits of fastest minimum-width integer types */
+#define INT_FAST8_MIN    INT32_MIN
+#define INT_FAST8_MAX    INT32_MAX
+#define UINT_FAST8_MAX   UINT32_MAX
+
+#define INT_FAST16_MIN   INT32_MIN
+#define INT_FAST16_MAX   INT32_MAX
+#define UINT_FAST16_MAX  UINT32_MAX
+
+#define INT_FAST32_MIN   INT32_MIN
+#define INT_FAST32_MAX   INT32_MAX
+#define UINT_FAST32_MAX  UINT32_MAX
+
+#define INT_FAST64_MIN   INT64_MIN
+#define INT_FAST64_MAX   INT64_MAX
+#define UINT_FAST64_MAX  UINT64_MAX
+
+/* Limits of integer types capable of holding object pointers */
+#define INTPTR_MIN   INT32_MIN
+#define INTPTR_MAX   INT32_MAX
+#define UINTPTR_MAX  UINT32_MAX
+
+/* Limits of greatest-width integer types */
+#define INTMAX_MIN   INT64_MIN
+#define INTMAX_MAX   INT64_MAX
+#define UINTMAX_MAX  UINT64_MAX
+
+/* Limits of other integer types */
+#define PTRDIFF_MIN INT32_MIN
+#define PTRDIFF_MAX INT32_MAX
+
+#define SIZE_MAX    UINT32_MAX
+
+/* Macros for integer constants */
+#define INT8_C(x)    (x)
+#define UINT8_C(x)   (x)
+#define INT16_C(x)   (x)
+#define UINT16_C(x)  (x)
+#define INT32_C(x)   (x)
+#define UINT32_C(x)  (x##U)
+#define INT64_C(x)   (x##LL)
+#define UINT64_C(x)  (x##ULL)
+#define INTMAX_C(x)  (x##LL)
+#define UINTMAX_C(x) (x##ULL)
+
+/* Additional utility macros */
+#define IS_POWER_OF_2(x) (((x) != 0) && ((x) & ((x) - 1)) == 0)
+
+/* Alignment macros */
+#define ALIGN_UP(x, align)   (((x) + ((align) - 1)) & ~((align) - 1))
+#define ALIGN_DOWN(x, align) ((x) & ~((align) - 1))
+
+/* Byte order conversion (assuming little-endian architecture) */
+static inline uint16_t _INT_UNUSED swap16(uint16_t x) {
+    return (x << 8) | (x >> 8);
+}
+
+static inline uint32_t _INT_UNUSED swap32(uint32_t x) {
+    return ((x << 24) & 0xFF000000) |
+           ((x <<  8) & 0x00FF0000) |
+           ((x >>  8) & 0x0000FF00) |
+           ((x >> 24) & 0x000000FF);
+}
+
+static inline uint64_t _INT_UNUSED swap64(uint64_t x) {
+    return ((x << 56) & 0xFF00000000000000ULL) |
+           ((x << 40) & 0x00FF000000000000ULL) |
+           ((x << 24) & 0x0000FF0000000000ULL) |
+           ((x <<  8) & 0x000000FF00000000ULL) |
+           ((x >>  8) & 0x00000000FF000000ULL) |
+           ((x >> 24) & 0x0000000000FF0000ULL) |
+           ((x >> 40) & 0x000000000000FF00ULL) |
+           ((x >> 56) & 0x00000000000000FFULL);
+}
+
+/* Debugging macros (active when DEBUG is defined) */
+#ifdef DEBUG
+    #define ASSERT_POWER_OF_2(x) \
+        _Static_assert(IS_POWER_OF_2(x), "Value must be power of 2")
+    
+    #define VERIFY_ALIGNMENT(ptr, align) \
+        do { \
+            if ((uintptr_t)(ptr) % (align) != 0) { \
+                __builtin_trap(); \
+            } \
+        } while(0)
+#else
+    #define ASSERT_POWER_OF_2(x) ((void)0)
+    #define VERIFY_ALIGNMENT(ptr, align) ((void)0)
 #endif
 
-/* Size of pointers */
-#ifndef PTRDIFF_MAX
-#define PTRDIFF_MAX  ((ptrdiff_t)(~((ptrdiff_t)1 << (8 * sizeof(ptrdiff_t) - 1))))
+#ifdef __cplusplus
+}
 #endif
-#ifndef PTRDIFF_MIN
-#define PTRDIFF_MIN  ((ptrdiff_t)(1 << (8 * sizeof(ptrdiff_t) - 1)))
-#endif
-
-#ifndef SIZE_MAX
-#define SIZE_MAX ((size_t)-1)
-#endif
-
-#ifndef SSIZE_MAX
-#define SSIZE_MAX ((ssize_t)(SIZE_MAX / 2))
-#endif
-
-/* Integer constants for easy portability */
-#define INT8_C(x)  (x)
-#define UINT8_C(x) (x ## U)
-#define INT16_C(x) (x)
-#define UINT16_C(x) (x ## U)
-#define INT32_C(x) (x)
-#define UINT32_C(x) (x ## U)
-#define INT64_C(x) (x ## L)
-#define UINT64_C(x) (x ## UL)
 
 #endif /* _STDINT_H */
