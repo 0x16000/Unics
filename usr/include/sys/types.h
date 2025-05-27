@@ -3,6 +3,7 @@ ifndef _TYPES_H
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 /* Boolean type definitions */
 typedef int32_t bool;
