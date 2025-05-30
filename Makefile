@@ -61,6 +61,7 @@ HEADERS = \
     usr/include/stddef.h \
     usr/include/stdint.h \
     usr/include/stdarg.h \
+    usr/include/align.h \
     usr/include/stdio.h \
     usr/include/stdlib.h \
     usr/include/aio.h \

@@ -147,10 +147,6 @@ typedef uint64_t  uintmax_t;
 /* Additional utility macros */
 #define IS_POWER_OF_2(x) (((x) != 0) && ((x) & ((x) - 1)) == 0)
 
-/* Alignment macros */
-#define ALIGN_UP(x, align)   (((x) + ((align) - 1)) & ~((align) - 1))
-#define ALIGN_DOWN(x, align) ((x) & ~((align) - 1))
-
 /* Byte order conversion (assuming little-endian architecture) */
 static inline uint16_t _INT_UNUSED swap16(uint16_t x) {
     return (x << 8) | (x >> 8);

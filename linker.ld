@@ -29,6 +29,8 @@ SECTIONS {
         __bitmap_start = .;
     }
 
+    end = .;
+
     /DISCARD/ : {
         *(.comment)
         *(.eh_frame)

@@ -76,12 +76,6 @@ _Static_assert(sizeof(wchar_t) == 2, "wchar_t must be 2 bytes");
     const typeof(((type *)0)->member) * __mptr = (ptr); \
     (type *)((char *)__mptr - offsetof(type, member)); })
 
-/* Alignment utilities */
-#define ALIGN_MASK(x, mask)    (((x) + (mask)) & ~(mask))
-#define ALIGN_UP(x, align)     ALIGN_MASK(x, (typeof(x))(align) - 1)
-#define ALIGN_DOWN(x, align)   ((x) & ~((typeof(x))(align) - 1))
-#define IS_ALIGNED(x, align)   (((x) & ((typeof(x))(align) - 1)) == 0)
-
 /* Size calculation utilities */
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 #define FIELD_SIZEOF(type, field) sizeof(((type *)0)->field)
