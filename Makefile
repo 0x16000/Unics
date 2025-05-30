@@ -19,6 +19,7 @@ BOOT_SRC = boot/boot.s
 KERNEL_SRCS = \
     sbin/init/init.c \
     usr/drivers/vga.c \
+    usr/drivers/fs.c \
     lib/libc/string.c \
     dev/shell/shell.c \
     dev/keyboard/keyboard.c \
@@ -43,6 +44,10 @@ KERNEL_SRCS = \
     bin/tty.c \
     bin/cpuinfo.c \
     bin/fetch.c \
+    bin/touch.c \
+    bin/ls.c \
+    bin/cat.c \
+    bin/ed.c \
     bin/expr.c
 
 ASM_SRCS = $(BOOT_SRC) arch/i386/cpu.s  # Added cpu.s here
@@ -67,6 +72,7 @@ HEADERS = \
     usr/include/aio.h \
     usr/include/sys/cdefs.h \
     usr/include/sys/ctype.h \
+    usr/include/sys/fs.h \
     usr/include/errno.h \
     usr/include/time.h \
     arch/i386/cpu.h \

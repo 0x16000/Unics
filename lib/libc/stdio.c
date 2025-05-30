@@ -180,43 +180,52 @@ int putchar(int c) {
 int printf(const char *format, ...) {
     va_list args;
     va_start(args, format);
-    char str[20];
+    char str[40];  // bigger buffer for large numbers
 
     for (const char *ptr = format; *ptr != '\0'; ptr++) {
         if (*ptr == '%' && *(ptr + 1) != '\0') {
             ptr++;
-            
-            if (*ptr == 's') {
+
+            if (*ptr == 'z' && *(ptr + 1) == 'u') {
+                // Handle %zu
+                ptr++;  // skip 'u'
+                size_t num = va_arg(args, size_t);
+                // Convert size_t to string base 10
+                itoa(num, str, 10); 
+                vga_puts(str);
+
+            } else if (*ptr == 's') {
                 const char *s = va_arg(args, const char *);
                 vga_puts(s ? s : "(null)");
+
             } else if (*ptr == 'd' || *ptr == 'i') {
                 int num = va_arg(args, int);
                 itoa(num, str, 10);
                 vga_puts(str);
+
             } else if (*ptr == 'x' || *ptr == 'X') {
                 int num = va_arg(args, int);
                 itoa(num, str, 16);
                 vga_puts(str);
+
             } else if (*ptr == 'c') {
                 char c = (char)va_arg(args, int);
                 vga_putchar(c);
+
             } else if (*ptr == 'u') {
                 unsigned int num = va_arg(args, unsigned int);
-                if (num <= 0x7FFFFFFF) {
-                    itoa((int)num, str, 10);
-                } else {
-                    itoa(214748364, str, 10);
-                    vga_puts(str);
-                    itoa((int)(num - 2147483640), str, 10);
-                }
+                itoa(num, str, 10);
                 vga_puts(str);
+
             } else if (*ptr == 'p') {
                 void *ptr_val = va_arg(args, void *);
                 vga_puts("0x");
-                itoa((int)(uintptr_t)ptr_val, str, 16);
+                itoa((uintptr_t)ptr_val, str, 16);
                 vga_puts(str);
+
             } else if (*ptr == '%') {
                 vga_putchar('%');
+
             } else {
                 vga_putchar('%');
                 vga_putchar(*ptr);
@@ -229,6 +238,7 @@ int printf(const char *format, ...) {
     va_end(args);
     return 0;
 }
+
 
 int puts(const char *str) {
     vga_puts(str);

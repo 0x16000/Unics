@@ -7,6 +7,7 @@
 #include <login.h>
 #include <arch/i386/cpu.h>
 #include <time.h>
+#include <sys/fs.h>
 
 extern shell_command_t shell_commands[];
 extern size_t shell_commands_count;
@@ -45,10 +46,11 @@ int main(void) {
     delay(150000);
     vga_puts_at("i386 functional", 0, 4);
     delay(100000);
-    vga_puts_at("Copyright (c) 2025 0x16000. All rights reserved.", 0, 5);
+    vga_puts_at("FS loaded", 0, 5);
+    vga_puts_at("Copyright (c) 2025 0x16000. All rights reserved.", 0, 6);
 
     vga_enable_cursor();
-    vga_update_cursor(0, 3); // Move cursor to start of line 3
+    vga_update_cursor(0, 7); // Move cursor to start of line 3
 
     delay(200000); // Pause for ~2 seconds to show boot info
 
@@ -58,6 +60,9 @@ int main(void) {
 
     // Initialize CPU features
     early_cpu_init();
+
+    // Initialize Filesystem
+    fs_init();
 
     // Initialize keyboard
     kb_init();

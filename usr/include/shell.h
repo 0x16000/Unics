@@ -54,5 +54,9 @@ extern int factor_main(int argc, char **argv);
 extern int tty_main(int argc, char **argv);
 extern int cpuinfo_main(int argc, char **argv);
 extern int fetch_main(int argc, char **argv);
+extern int ls_main(int argc, char **argv);
+extern int touch_main(int argc, char **argv);
+extern int ed_main(int argc, char **argv);
+extern int cat_main(int argc, char **argv);
 
 #endif // SHELL_H

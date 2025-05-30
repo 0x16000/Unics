@@ -39,6 +39,10 @@ shell_command_t shell_commands[] = {
     {"tty",      "Print console session", tty_main},
     {"cpuinfo",  "Print Processor information", cpuinfo_main},
     {"fetch",    "Fetch OS information", fetch_main},
+    {"ls",       "List existing Files", ls_main},
+    {"touch",    "Create a file", touch_main},
+    {"ed",       "The simple editor", ed_main},
+    {"cat",      "Show what is in a file", cat_main},
 };
 
 // External reference for the command count
