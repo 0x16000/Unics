@@ -72,6 +72,21 @@ int main(void) {
     // Login prompt
     login_prompt();
 
+    // Welcome prompt
+    vga_puts("Welcome to First Edition Unics.  You may be sure that it\n"
+         "is suitably protected by ironclad licences, contractual agreements,\n"
+         "living wills, and trade secret laws of every sort.  A trolley car is\n"
+         "certain to grow in your stomach if you violate the conditions\n"
+         "under which you got this tape.  Consult your lawyer in case of any doubt.\n"
+         "If doubt persists, consult our lawyers.\n"
+         "\n"
+         "Please commit this message to memory.  If this is a hardcopy terminal,\n"
+         "tear off the paper and affix it to your machine.  Otherwise\n"
+         "take a photo of your screen.\n"
+         "\n"
+         "Thank you for choosing First Edition Unics.  Have a nice day.\n");
+
+
     // Start shell
     shell_context_t shell_ctx;
     shell_init(&shell_ctx, shell_commands, shell_commands_count);
