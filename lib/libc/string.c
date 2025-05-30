@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 // Calculate the length of a string
 size_t strlen(const char *str) {
@@ -29,14 +30,14 @@ int strncmp(const char *s1, const char *s2, size_t n) {
 }
 
 // Copy a string
-char *strcpy(char *restrict dest, const char *restrict src) {
+char *strcpy(char *dest, const char *src) {
     char *ret = dest;
     while ((*dest++ = *src++));
     return ret;
 }
 
 // Copy up to n characters from a string
-char *strncpy(char *restrict dest, const char *restrict src, size_t n) {
+char *strncpy(char *dest, const char *src, size_t n) {
     char *ret = dest;
     while (n && (*dest++ = *src++)) n--;
     while (n--) *dest++ = '\0';
@@ -44,7 +45,7 @@ char *strncpy(char *restrict dest, const char *restrict src, size_t n) {
 }
 
 // Concatenate two strings
-char *strcat(char *restrict dest, const char *restrict src) {
+char *strcat(char *dest, const char *src) {
     char *ret = dest;
     while (*dest) dest++;
     while ((*dest++ = *src++));
@@ -52,7 +53,7 @@ char *strcat(char *restrict dest, const char *restrict src) {
 }
 
 // Concatenate up to n characters from a string
-char *strncat(char *restrict dest, const char *restrict src, size_t n) {
+char *strncat(char *dest, const char *src, size_t n) {
     char *ret = dest;
     while (*dest) dest++;
     while (n-- && (*dest++ = *src++));
@@ -68,7 +69,7 @@ void *memset(void *s, int c, size_t n) {
 }
 
 // Copy n bytes from one memory location to another
-void *memcpy(void *restrict dest, const void *restrict src, size_t n) {
+void *memcpy(void *dest, const void *src, size_t n) {
     unsigned char *d = dest;
     const unsigned char *s = src;
     while (n--) *d++ = *s++;
