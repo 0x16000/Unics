@@ -74,10 +74,6 @@ bool login_authenticate(void) {
 }
 
 void login_prompt(void) {
-    printf("Welcome to the Unics ");
-    printf(OS_VERSION);
-    printf(" Operating System\n\n");
-
     if (!login_authenticate()) {
         printf("Maximum login attempts reached. Halting.\n");
         while (1) {} // Infinite loop
