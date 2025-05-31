@@ -246,6 +246,69 @@ int puts(const char *str) {
     return 0;
 }
 
+int fprintf(int fd, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    char str[40];  // buffer for number conversions
+    char c;
+    (void)fd;  // Currently unused since we only have VGA output
+
+    for (const char *ptr = format; *ptr != '\0'; ptr++) {
+        if (*ptr == '%' && *(ptr + 1) != '\0') {
+            ptr++;
+
+            if (*ptr == 'z' && *(ptr + 1) == 'u') {
+                // Handle %zu
+                ptr++;  // skip 'u'
+                size_t num = va_arg(args, size_t);
+                itoa(num, str, 10); 
+                vga_puts(str);
+
+            } else if (*ptr == 's') {
+                const char *s = va_arg(args, const char *);
+                vga_puts(s ? s : "(null)");
+
+            } else if (*ptr == 'd' || *ptr == 'i') {
+                int num = va_arg(args, int);
+                itoa(num, str, 10);
+                vga_puts(str);
+
+            } else if (*ptr == 'x' || *ptr == 'X') {
+                int num = va_arg(args, int);
+                itoa(num, str, 16);
+                vga_puts(str);
+
+            } else if (*ptr == 'c') {
+                c = (char)va_arg(args, int);
+                vga_putchar(c);
+
+            } else if (*ptr == 'u') {
+                unsigned int num = va_arg(args, unsigned int);
+                itoa(num, str, 10);
+                vga_puts(str);
+
+            } else if (*ptr == 'p') {
+                void *ptr_val = va_arg(args, void *);
+                vga_puts("0x");
+                itoa((uintptr_t)ptr_val, str, 16);
+                vga_puts(str);
+
+            } else if (*ptr == '%') {
+                vga_putchar('%');
+
+            } else {
+                vga_putchar('%');
+                vga_putchar(*ptr);
+            }
+        } else {
+            vga_putchar(*ptr);
+        }
+    }
+
+    va_end(args);
+    return 0;
+}
+
 int sprintf(char *buf, const char *format, ...) {
     va_list args;
     va_start(args, format);

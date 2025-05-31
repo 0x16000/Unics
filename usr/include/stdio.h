@@ -20,6 +20,7 @@ int ungetc(int c, int fd);
 
 /* Rest of your existing stdio.h content */
 int puts(const char *str);
+int fprintf(int fd, const char *format, ...);
 int sprintf(char *buf, const char *format, ...);
 int snprintf(char *buf, size_t n, const char *format, ...);
 int fputs(const char *str, int fd);
