@@ -1,98 +1,33 @@
-![Image](https://github.com/user-attachments/assets/066bb4a8-a77d-4af8-9713-1c12a5bad717)
+## Unics Source:
+This is the top level of the Unics source directory.
 
-# Unics Operating System
+Unics is a Unix-Like Operating system, Unics tends to focus on usability and security.
+A new kernel developed entirely from scratch.
 
-Unics is a POSIX-compliant, Unix-like operating system inspired by BSD, designed to run on the i386 architecture. It aims to provide a lightweight, efficient, and educational platform for understanding low-level system concepts and kernel development. Unics includes a small `libc` for basic system functionality and uses the GRUB bootloader for boot management.
+For copyright information, please see [the LICENSE file](LICENSE) in this directory.
 
-## Features
+The Makefile in this directory builds the whole system from the source tree.
 
-- **POSIX compliance** for compatibility with Unix-like software.
-- BSD-inspired design and system utilities.
-- Custom shell and basic command-line tools like `clear`, `echo`, `whoami`, and `cowsay`.
-- A small, lightweight `libc` for essential system libraries.
-- Simple, low-level kernel built for the i386 architecture.
-- Uses the **GRUB bootloader** for system booting.
-- Focus on simplicity, clarity, and performance.
-- Bootloader with a `boot>` prompt.
-- Minimalist design for learning and experimentation.
+For information on the CPU architecture supported by Unics: i386.
 
-## Architecture
+For official Unics bootable images, (COMING SOON).
 
-Unics is designed to run on 32-bit x86 hardware (i386). It is built with a focus on:
-- Kernel-level development
-- Bootstrapping a minimalistic operating system
-- User-space utilities and applications
-- System calls for basic interaction with hardware and the kernel
+## Source Roadmap
 
-## License
-BSD 3-Clause License
+| Directory | Description |
+|----------|-------------|
+| `bin`    | System/user commands. |
+| `arch`   | Processor-dependent software. |
+| `boot`   | Boot-specific code. |
+| `build`  | Build process artifacts (e.g., `.d` files). |
+| `dev`    | Device driver files (e.g., shell, keyboard, etc.). |
+| `lib`    | Libraries (e.g., C standard library). |
+| `sbin`   | System-dependent software. |
+| `usr`    | User space files (e.g., `include/`, drivers, `sbin/`). |
 
-Copyright (c) 2025, 0x16000
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+## Contribute
+We gladly accept contributors to the Unics kernel and grow our community.
+For now please ONLY write in C, assembly only if it is software that cannot be written in C.
 
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-## Getting Started
-
-To build and run Unics:
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/0x16000/Unics.git
-   cd Unics
-
-2. Build the system:
-   Make sure you have the necessary tools installed (such as `gcc`, `make`, `qemu` for virtualization, and `grub` for bootloader):
-   ```bash
-   make
-
-3. Boot the operating system using an emulator like QEMU:
-```bash
-make run
-```
-This will start Unics in a virtual machine environment, allowing you to interact with the boot> prompt and explore the system.
-
-## Development
-
-4. Fork the repository on GitHub.
-5. Clone your fork locally:
-```bash
-git clone https://github.com/your-username/Unics.git
-cd Unics
-```
-6. Create a new branch for your changes:
-```bash
-git checkout -b feature-name
-```
-7. Make your changes, then commit and push them:
-```bash
-git add .
-git commit -m "Description of changes"
-git push origin feature-name
-```
-8. Create a pull request from your fork to the main repository.
-
-## Thank you for exploring Unics! We hope it helps you learn and experiment with operating system concepts.
+Thank you for choosing Unics First Edition. Have a nice day.
