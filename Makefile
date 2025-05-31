@@ -49,6 +49,7 @@ KERNEL_SRCS = \
     bin/cat.c \
     bin/ed.c \
     bin/rm.c \
+    bin/mv.c \
     bin/expr.c
 
 ASM_SRCS = $(BOOT_SRC) arch/i386/cpu.s  # Added cpu.s here

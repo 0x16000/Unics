@@ -58,6 +58,7 @@ shell_command_t shell_commands[] = {
     { "uname",    "Provide OS information",              uname_main    },
     { "whoami",   "Print session information",           whoami_main   },
     { "yes",      "Repeatedly print a line",             yes_main      },
+    { "mv",       "Move file/folder",                    mv_main       },
 };
 
 // External reference for the command count
