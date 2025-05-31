@@ -49,6 +49,7 @@ shell_command_t shell_commands[] = {
     { "fetch",    "Fetch OS information",                fetch_main    },
     { "help",     "Display this help message",           help_main     },
     { "ls",       "List existing Files",                 ls_main       },
+    { "rm",       "Remove file",                         rm_main       },
     { "rand",     "Generate a random number",            rand_main     },
     { "reboot",   "Reboot the system",                   reboot_main   },
     { "shutdown", "Poweroff the system",                 shutdown_main },

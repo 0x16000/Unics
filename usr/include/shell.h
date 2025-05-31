@@ -58,5 +58,6 @@ extern int ls_main(int argc, char **argv);
 extern int touch_main(int argc, char **argv);
 extern int ed_main(int argc, char **argv);
 extern int cat_main(int argc, char **argv);
+extern int rm_main(int argc, char **argv);
 
 #endif // SHELL_H
