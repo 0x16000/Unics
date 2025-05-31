@@ -3,7 +3,7 @@
 
 int ls_main(int argc, char *argv[]) {
     if (root_fs.file_count == 0) {
-        printf("\n");
+        printf("");
         return 0;
     }
 
