@@ -7,42 +7,56 @@
 extern shell_command_t shell_commands[];  // The shell commands array
 extern size_t shell_commands_count;        // The number of shell commands
 
+void print_padded(const char *text, int width) {
+    int len = strlen(text);
+    vga_puts(text);
+    for (int i = len; i < width; i++) {
+        vga_putchar(' ');
+    }
+}
+
 // Function to handle the help command
 int help_main(int argc, char **argv) {
-    (void) argc; // Indicate that argc is unused
-    (void) argv; // Indicate that argv is unused
-    vga_puts("Available commands:\n");
+    (void) argc;
+    (void) argv;
+
+    vga_puts("+------------------+-------------------------------------------+\n");
+    vga_puts("| Command          | Description                               |\n");
+    vga_puts("+------------------+-------------------------------------------+\n");
+
     for (size_t i = 0; i < shell_commands_count; i++) {
-        // Display the command name and description in a nice format
-        vga_puts(shell_commands[i].name);
-        vga_puts(" - ");
-        vga_puts(shell_commands[i].description);
-        vga_putchar('\n');
+        vga_puts("| ");
+        print_padded(shell_commands[i].name, 16);      // Command column
+        vga_puts(" | ");
+        print_padded(shell_commands[i].description, 41); // Description column
+        vga_puts(" |\n");
     }
+
+    vga_puts("+------------------+-------------------------------------------+\n");
     return 0;
 }
 
 // Public shell command list (accessible from init.c)
 shell_command_t shell_commands[] = {
-    {"clear", "Clear the screen", clear_main},
-    {"help", "Display this help message", help_main},
-    {"echo", "Display a line of text",  echo_main},
-    {"yes",  "Repeatedly print a line", yes_main},
-    {"expr", "Calculate entered input", expr_main},
-    {"uname", "Provide OS information", uname_main},
-    {"shutdown", "Poweroff the system", shutdown_main},
-    {"reboot",   "Reboot the system",   reboot_main},
-    {"cowsay",   "Make a cow say a line", cowsay_main},
-    {"whoami",   "Print session information", whoami_main},
-    {"rand",     "Generate a random number", rand_main},
-    {"factor",   "Display prime factor of a number", factor_main},
-    {"tty",      "Print console session", tty_main},
-    {"cpuinfo",  "Print Processor information", cpuinfo_main},
-    {"fetch",    "Fetch OS information", fetch_main},
-    {"ls",       "List existing Files", ls_main},
-    {"touch",    "Create a file", touch_main},
-    {"ed",       "The simple editor", ed_main},
-    {"cat",      "Show what is in a file", cat_main},
+    { "cat",      "Show what is in a file",              cat_main      },
+    { "clear",    "Clear the screen",                    clear_main    },
+    { "cowsay",   "Make a cow say a line",               cowsay_main   },
+    { "cpuinfo",  "Print Processor information",         cpuinfo_main  },
+    { "echo",     "Display a line of text",              echo_main     },
+    { "ed",       "The simple editor",                   ed_main       },
+    { "expr",     "Calculate entered input",             expr_main     },
+    { "factor",   "Display prime factor of a number",    factor_main   },
+    { "fetch",    "Fetch OS information",                fetch_main    },
+    { "help",     "Display this help message",           help_main     },
+    { "ls",       "List existing Files",                 ls_main       },
+    { "rand",     "Generate a random number",            rand_main     },
+    { "reboot",   "Reboot the system",                   reboot_main   },
+    { "shutdown", "Poweroff the system",                 shutdown_main },
+    { "touch",    "Create a file",                       touch_main    },
+    { "tty",      "Print console session",               tty_main      },
+    { "uname",    "Provide OS information",              uname_main    },
+    { "whoami",   "Print session information",           whoami_main   },
+    { "yes",      "Repeatedly print a line",             yes_main      },
 };
 
 // External reference for the command count
