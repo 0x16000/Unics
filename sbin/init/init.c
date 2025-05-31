@@ -41,9 +41,9 @@ int main(void) {
     vga_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
 
     // boot info
-    delay(100000);
+    delay(050000);
     vga_puts_at("Firmware boot", 0, 3);
-    delay(150000);
+    delay(100000);
     vga_puts_at("i386 functional", 0, 4);
     delay(100000);
     vga_puts_at("FS loaded", 0, 5);
