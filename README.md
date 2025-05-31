@@ -25,6 +25,23 @@ For official Unics bootable images, (COMING SOON).
 | `sbin`   | System-dependent software. |
 | `usr`    | User space files (e.g., `include/`, drivers, `sbin/`). |
 
+## Compile kernel
+Compiling is straight-forward.
+-
+To compile run:
+```bash
+make
+```
+
+To produce an ISO (bootable image)
+```bash
+make iso
+```
+
+Finally run Unics
+```bash
+make run
+```
 
 ## Contribute
 We gladly accept contributors to the Unics kernel and grow our community.
