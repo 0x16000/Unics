@@ -2,6 +2,9 @@
 #include <sys/fs.h>
 
 int ls_main(int argc, char *argv[]) {
+    (void)argc;
+    (void)argv;
+    
     if (root_fs.file_count == 0) {
         printf("");
         return 0;

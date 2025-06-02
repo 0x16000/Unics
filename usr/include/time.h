@@ -9,4 +9,4 @@ void delay(uint64_t ms);
 // Reads the CPU's time stamp counter for super precise timing
 static inline uint64_t rdtsc(void);
 
-#endif
+#endif // TIME_H
