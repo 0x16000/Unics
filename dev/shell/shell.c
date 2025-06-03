@@ -52,7 +52,7 @@ shell_command_t shell_commands[] = {
     { "rm",       "Remove file",                           rm_main       },
     { "rand",     "Generate a random number",              rand_main     },
     { "reboot",   "Reboot the system",                     reboot_main   },
-    { "shutdown", "Power off the system",                   shutdown_main },
+    { "shutdown", "Power off the system",                  shutdown_main },
     { "touch",    "Create a file",                         touch_main    },
     { "tty",      "Print current console session",         tty_main      },
     { "uname",    "Provide OS information",                uname_main    },
