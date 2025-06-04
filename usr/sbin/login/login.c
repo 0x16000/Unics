@@ -10,7 +10,7 @@ static void clear_input_buffer(char* buffer, size_t size) {
 }
 
 char* login_get_username(char* buffer, size_t size) {
-    vga_puts("login: ");
+    printf("login: ");
     vga_enable_cursor();
     size_t pos = 0;
     clear_input_buffer(buffer, size);
