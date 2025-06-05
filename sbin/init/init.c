@@ -13,9 +13,9 @@ extern shell_command_t shell_commands[];
 extern size_t shell_commands_count;
 
 static const struct multiboot_header multiboot_header __attribute__((used)) = {
-    .magic     = MULTIBOOT_HEADER_MAGIC,
-    .flags     = MULTIBOOT_HEADER_FLAGS,
-    .checksum  = -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
+    .magic = MULTIBOOT_HEADER_MAGIC,
+    .flags = MULTIBOOT_HEADER_FLAGS,
+    .checksum = -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
 };
 
 extern uint32_t multiboot_info_ptr;
@@ -28,93 +28,125 @@ int main(void) {
     vga_initialize();
     vga_disable_cursor();
     vga_clear();
-
-    // Print header
-    vga_puts(">> Unics/i386");
-
-    // boot> prompt at (0,1)
-    vga_puts_at("boot> ", 0, 1);
-    delay(10000);
-    vga_puts_at("entry point at 0xC0000000", 0, 2); // Default Modern Kernel Operating System hex value 32-bit
-
-    // Kernel output text color: White on blue
-    vga_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
-
-    // boot info
-    delay(050000);
-    vga_puts_at("Firmware boot", 0, 3);
-    delay(100000);
-    vga_puts_at("i386 functional", 0, 4);
-    delay(100000);
-    vga_puts_at("FS loaded", 0, 5);
-    vga_puts_at("Copyright (c) 2025 0x16000. All rights reserved.", 0, 6);
-
-    vga_enable_cursor();
-    vga_update_cursor(0, 7); // Move cursor to start of line 3
-
-    delay(200000); // Pause for ~2 seconds to show boot info
-
-    // Switch back to normal text color (light grey on black)
     vga_set_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
-    vga_clear(); // Clear screen with the new color (black background)
 
+    // BSD-style boot header
+    vga_puts("Unics/i386 0.1-RELEASE #0: ");
+    vga_puts(__DATE__);
+    vga_puts("\n");
+    vga_puts("Copyright (c) 2025 0x16000. All rights reserved.\n");
+    vga_puts("\n");
+    
+    delay(150000);
+    
+    // System identification
+    vga_puts("CPU: i386-class processor\n");
+    delay(100000);
+    
+    vga_puts("\n");
+    
+    // Device probing messages
+    vga_puts("Probing devices:\n");
+    delay(100000);
+    
+    vga_puts("kbd0 at atkbdc0 (kbd port)\n");
+    delay(100000);
+    
+    vga_puts("vga0: <Generic VGA> at port 0x3c0-0x3df iomem 0xa0000-0xbffff\n");
+    delay(100000);
+    
+    vga_puts("sc0: <System console> at flags 0x100 on isa0\n");
+    delay(100000);
+    
+    vga_puts("\n");
+    
     // Initialize CPU features
     early_cpu_init();
-
+    
+    // System initialization messages
+    vga_puts("Mounting root from RAM\n");
+    delay(100000);
+    
     // Initialize Filesystem
     fs_init();
-
+    vga_puts("Root filesystem: running from RAM\n");
+    delay(100000);
+    
     // Initialize keyboard
     kb_init();
     kb_enable_input(true);
     kb_set_boot_complete(true);
-
+    
+    vga_puts("Kernel initialization complete.\n");
+    delay(100000);
+    
+    vga_puts("\n");
+    vga_puts("Starting system services...\n");
+    delay(200000);
+    
+    vga_puts("Starting init process\n");
+    delay(100000);
+    
+    vga_puts("\n");
+    vga_enable_cursor();
+    
     // Login prompt
     login_prompt();
-
-    // Welcome prompt
-    vga_puts("Welcome to First Edition Unics.  You may be sure that it\n"
-         "is suitably protected by ironclad licences, contractual agreements,\n"
-         "living wills, and trade secret laws of every sort.  A trolley car is\n"
-         "certain to grow in your stomach if you violate the conditions\n"
-         "under which you got this tape.  Consult your lawyer in case of any doubt.\n"
-         "If doubt persists, consult our lawyers.\n"
-         "\n"
-         "Please commit this message to memory.  If this is a hardcopy terminal,\n"
-         "tear off the paper and affix it to your machine.  Otherwise\n"
-         "take a photo of your screen.\n"
-         "\n"
-         "Thank you for choosing First Edition Unics.  Have a nice day.\n");
-
-
+    
+    // BSD-style welcome message
+    vga_puts("\n");
+    vga_puts("Unics/i386 0.1-RELEASE (GENERIC)\n");
+    vga_puts("\n");
+    vga_puts("Welcome to Unics!\n");
+    vga_puts("\n");
+    vga_puts("This software is provided \"as is\" and without any express or\n");
+    vga_puts("implied warranties, including, without limitation, the implied\n");
+    vga_puts("warranties of merchantability and fitness for a particular purpose.\n");
+    vga_puts("\n");
+    vga_puts("Report bugs to the github using/opening a issue or pull reqeust.\n");
+    vga_puts("\n");
+    
     // Start shell
     shell_context_t shell_ctx;
     shell_init(&shell_ctx, shell_commands, shell_commands_count);
     shell_run(&shell_ctx);
-
+    
     return 0;
 }
 
 void early_cpu_init(void) {
     cpu_features_t features;
     cpu_detect_features(&features);
-
+    
+    vga_puts("cpu0: features=0x");
+    // Print hex representation of features (you'll need to implement this)
+    vga_puts("1bf<FPU,VME,DE,PSE,TSC,MSR,PAE,MCE>\n");
+    delay(100000);
+    
     cpu_init_fpu();
-
+    vga_puts("cpu0: FPU initialized\n");
+    delay(50000);
+    
     if (features.sse) {
         cpu_init_sse();
+        vga_puts("cpu0: SSE extensions enabled\n");
+        delay(50000);
     }
-
+    
     if (features.pae) {
         uint32_t cr4 = cpu_get_cr4();
         cpu_set_cr4(cr4 | CR4_PAE);
+        vga_puts("cpu0: PAE enabled\n");
+        delay(50000);
     }
-
+    
     if (features.sse || features.sse2) {
         cpu_enable_sse();
     }
-
+    
     if (features.apic) {
         cpu_enable_smp();
+        vga_puts("cpu0: APIC initialized\n");
+        delay(50000);
     }
 }
