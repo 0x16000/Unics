@@ -137,11 +137,12 @@ void vga_puts(const char* str) {
 // Enable the cursor
 void vga_enable_cursor(void) {
     outb(VGA_CRTC_ADDR, VGA_CURSOR_START_REG);
-    outb(VGA_CRTC_DATA, 14);
+    outb(VGA_CRTC_DATA, 0);
 
     outb(VGA_CRTC_ADDR, VGA_CURSOR_END_REG);
     outb(VGA_CRTC_DATA, 15);
 }
+
 
 // Disable the cursor
 void vga_disable_cursor(void) {
