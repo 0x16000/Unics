@@ -43,6 +43,8 @@ int fetch_main(int argc, char **argv) {
     printf("   /(        )`       -------\n");
     printf("   \\ \\___   / |       Kernel: ");
     printf(OS_NAME);
+    printf(" ");
+    printf(OS_VERSION);
     printf("\n");
     printf("   /- _  `-/  '       Shell: sh\n");
     printf("  (/\\/ \\ \\   /\\       CPU: ");
