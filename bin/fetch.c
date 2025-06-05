@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <vers.h>
 #include <arch/i386/cpu.h>
-
 static void print_cpu_brand() {
     char brand[49] = {0};
     
@@ -35,28 +34,26 @@ static void print_cpu_brand() {
         printf("Unknown CPU");
     }
 }
-
 int fetch_main(int argc, char **argv) {
     (void)argc; // Suppress unused parameter warnings
     (void)argv; // Suppress unused parameter warnings
-    printf("    ,        ,        /unics$\n");
-    printf("   /(        )`       -------\n");
+    printf("    ,        ,        root@unics$\n");
+    printf("   /(        )`       ---------------\n");
     printf("   \\ \\___   / |       Kernel: ");
     printf(OS_NAME);
     printf(" ");
     printf(OS_VERSION);
     printf("\n");
-    printf("   /- _  `-/  '       Shell: sh\n");
-    printf("  (/\\/ \\ \\   /\\       CPU: ");
+    printf("   /- _  `-/  '       Host: root\n");
+    printf("  (/\\/ \\ \\   /\\       Shell: sh\n");
+    printf("  / /   | `    \\      CPU: ");
     print_cpu_brand();
     printf("\n");
-    printf("  / /   | `    \\\n");
     printf("  O O   ) /    |\n");
     printf("  `-^--'`<     '\n");
     printf(" (_.)  _  )   /\n");
     printf("  `.___/`    /\n");
     printf("    `-----' /\n");
     printf("          `\n");
-
     return 0;
 }
