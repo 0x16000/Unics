@@ -63,5 +63,9 @@ extern int mv_main(int argc, char **argv);
 extern int ps_main(int argc, char **argv);
 extern int bc_main(int argc, char **argv);
 extern int cp_main(int argc, char **argv);
+extern int mkdir_main(int argc, char **argv);
+extern int cd_main(int argc, char **argv);
+extern int rmdir_main(int argc, char **argv);
+extern int pwd_main(int argc, char **argv);
 
 #endif // SHELL_H

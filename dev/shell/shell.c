@@ -40,6 +40,7 @@ int help_main(int argc, char **argv) {
 shell_command_t shell_commands[] = {
     { "bc",       "Basic calculator",                      bc_main       },
     { "cat",      "Show the contents of a file",           cat_main      },
+    { "cd",       "Change directory",                      cd_main       },
     { "cp",       "Copy/move file to a destination",       cp_main       },
     { "clear",    "Clear the screen",                      clear_main    },
     { "cowsay",   "Make a cow say a line",                 cowsay_main   },
@@ -52,6 +53,7 @@ shell_command_t shell_commands[] = {
     { "help",     "Display this help message",             help_main     },
     { "ls",       "List existing files",                   ls_main       },
     { "rm",       "Remove file",                           rm_main       },
+    { "rmdir",    "Remove empty directory",                rmdir_main    },
     { "rand",     "Generate a random number",              rand_main     },
     { "reboot",   "Reboot the system",                     reboot_main   },
     { "shutdown", "Power off the system",                  shutdown_main },
@@ -61,7 +63,9 @@ shell_command_t shell_commands[] = {
     { "whoami",   "Print user information",                whoami_main   },
     { "yes",      "Repeatedly print a string",             yes_main      },
     { "mv",       "Move file/folder",                      mv_main       },
+    { "mkdir",    "Make directory",                        mkdir_main    },
     { "ps",       "View processes",                        ps_main       },
+    { "pwd",      "Print working directory",               pwd_main      },
 };
 
 

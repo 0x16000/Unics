@@ -1,17 +1,31 @@
 #include <sys/fs.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 // The global filesystem instance
 FileSystem root_fs;
+File *current_dir = NULL;
 
 void fs_init(void) {
     memset(&root_fs, 0, sizeof(FileSystem));
     root_fs.file_count = 0;
+
+    // Create root directory
+    File *root_dir = &root_fs.files[root_fs.file_count++];
+    strcpy(root_dir->name, "/");
+    root_dir->is_dir = true;
+    root_dir->parent = NULL;
+    root_dir->data = NULL;
+    root_dir->size = 0;
+    root_dir->is_open = false;
+    root_dir->position = 0;
+
+    current_dir = root_dir;
 }
 
 int fs_create(const char *filename) {
-    if (root_fs.file_count >= MAX_FILES) {
+        if (root_fs.file_count >= MAX_FILES) {
         return -1;
     }
 
@@ -36,6 +50,8 @@ int fs_create(const char *filename) {
 
     new_file->size = 0;
     new_file->is_open = false;
+    new_file->is_dir = false;
+    new_file->parent = current_dir;
     new_file->position = 0;
     root_fs.file_count++;
 
@@ -46,6 +62,8 @@ int fs_delete(const char *filename) {
     for (size_t i = 0; i < root_fs.file_count; i++) {
         if (strcmp(root_fs.files[i].name, filename) == 0) {
             if (root_fs.files[i].is_open) return -1;
+            if (root_fs.files[i].is_dir) return -3; // Can't delete directory
+
             free(root_fs.files[i].data);
             for (size_t j = i; j < root_fs.file_count - 1; j++) {
                 root_fs.files[j] = root_fs.files[j + 1];
@@ -154,11 +172,62 @@ int fs_seek(FileSystem *fs, const char *filename, size_t offset) {
 
 void fs_list(FileSystem *fs) {
     for (size_t i = 0; i < fs->file_count; i++) {
-        // Simple output - in a real OS you'd use a proper print function
-        const char *status = fs->files[i].is_open ? "open" : "closed";
-        // This assumes you have some way to output strings
-        // In a real OS, you'd replace this with your kernel's print function
-        // For now, we'll just leave it as a placeholder
-        // printf("[%s] %s (%zu bytes)\n", status, fs->files[i].name, fs->files[i].size);
+        File *f = &fs->files[i];
+        if (f->parent == current_dir) {  // Only list files/dirs in current directory
+            const char *type = f->is_dir ? "DIR " : "FILE";
+            const char *status = f->is_open ? "open" : "closed";
+            printf("[%s] %s (%s) - %zu bytes\n", status, f->name, type, f->size);
+        }
     }
+}
+
+int fs_mkdir(const char *dirname) {
+    if (root_fs.file_count >= MAX_FILES) {
+        return -1; // Too many files/directories
+    }
+
+    if (strlen(dirname) >= MAX_FILENAME_LEN) {
+        return -2; // Name too long
+    }
+
+    // Check if directory already exists
+    for (size_t i = 0; i < root_fs.file_count; i++) {
+        if (strcmp(root_fs.files[i].name, dirname) == 0) {
+            return -3; // Already exists
+        }
+    }
+
+    // Create new directory
+    File *new_file = &root_fs.files[root_fs.file_count];
+    strncpy(new_file->name, dirname, MAX_FILENAME_LEN);
+    new_file->is_dir = true;
+    new_file->data = NULL; // Directories don't have data
+    new_file->size = 0;
+    new_file->is_open = false;
+    new_file->position = 0;
+    new_file->parent = current_dir;
+
+    root_fs.file_count++;
+    return 0; // Success
+}
+
+int fs_chdir(const char *dirname) {
+    if (strcmp(dirname, "..") == 0) {
+        if (current_dir->parent != NULL) {
+            current_dir = current_dir->parent;
+            return 0; // success
+        }
+        // Already at root
+        return -2;
+    }
+
+    for (size_t i = 0; i < root_fs.file_count; i++) {
+        File *f = &root_fs.files[i];
+        if (f->parent == current_dir && strcmp(f->name, dirname) == 0 && f->is_dir) {
+            current_dir = f;
+            return 0;
+        }
+    }
+
+    return -1; // Directory not found
 }

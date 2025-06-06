@@ -9,12 +9,14 @@
 #define MAX_FILENAME_LEN 32
 #define MAX_FILE_SIZE 4096
 
-typedef struct {
+typedef struct File {
     char name[MAX_FILENAME_LEN];
     uint8_t *data;
     size_t size;
     bool is_open;
     size_t position;
+    bool is_dir;
+    struct File *parent;
 } File;
 
 typedef struct {
@@ -24,6 +26,7 @@ typedef struct {
 
 // Declare the global filesystem instance
 extern FileSystem root_fs;
+extern File *current_dir;
 
 // Filesystem functions
 void fs_init(void);
@@ -31,6 +34,8 @@ int fs_create(const char *filename);
 int fs_delete(const char *filename);
 int fs_open(FileSystem *fs, const char *filename);
 int fs_close(FileSystem *fs, const char *filename);
+int fs_mkdir(const char *dirname);
+int fs_chdir(const char *dirname);
 
 // File I/O operations
 size_t fs_read(FileSystem *fs, const char *filename, void *buffer, size_t size);
