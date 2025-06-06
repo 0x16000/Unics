@@ -29,7 +29,7 @@ int main(void) {
     vga_initialize();
     vga_disable_cursor();
     vga_clear();
-    vga_set_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+    vga_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
 
     // BSD-style boot header
     vga_puts("Unics/i386 0.1-RELEASE #0: ");

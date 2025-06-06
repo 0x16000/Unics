@@ -81,7 +81,7 @@ void shell_init(shell_context_t *ctx, shell_command_t *commands, size_t num_comm
     strcpy(ctx->current_path, "/");
 
     // Set default VGA color
-    vga_set_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+    vga_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
 }
 
 // Main shell loop
