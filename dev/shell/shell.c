@@ -38,6 +38,7 @@ int help_main(int argc, char **argv) {
 
 // Public shell command list (accessible from init.c)
 shell_command_t shell_commands[] = {
+    { "bc",       "Basic calculator",                      bc_main       },
     { "cat",      "Show the contents of a file",           cat_main      },
     { "clear",    "Clear the screen",                      clear_main    },
     { "cowsay",   "Make a cow say a line",                 cowsay_main   },

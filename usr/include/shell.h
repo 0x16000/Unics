@@ -61,5 +61,6 @@ extern int cat_main(int argc, char **argv);
 extern int rm_main(int argc, char **argv);
 extern int mv_main(int argc, char **argv);
 extern int ps_main(int argc, char **argv);
+extern int bc_main(int argc, char **argv);
 
 #endif // SHELL_H
