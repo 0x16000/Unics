@@ -69,8 +69,21 @@ int main(void) {
     delay(100000);
     
     // Initialize Filesystem
-    fs_init();
-    vga_puts("Root filesystem: running from RAM\n");
+    fs_init(); // initialize the global root_fs and current_dir
+
+    // Use &root_fs as the fs pointer for file operations
+    fs_mkdir("root"); // create directory "root"
+    fs_create("README"); // create file "README"
+    fs_open(&root_fs, "README"); // open README for writing
+
+    const char *text = "Welcome to Unics and thank you for choosing it!\n"
+    "First edition Unics is the first version of this kernel / operating system.\n"
+    "As said before for a list of commands run the 'help' command.\n"
+    "Thank you, have a nice day.\n";
+    fs_write(&root_fs, "README", text, strlen(text)); // write to README
+
+    fs_close(&root_fs, "README"); // close file when done
+
     delay(100000);
 
     // Create processes

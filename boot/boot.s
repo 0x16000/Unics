@@ -11,38 +11,35 @@ align 4
 
 section .text
 global _start
-extern main             ; Changed from 'main' to more descriptive 'kernel_main'
-global multiboot_info_ptr      ; Export multiboot info pointer to kernel
+extern main
+global multiboot_info_ptr
 
 _start:
-    ; Set up stack (16KB aligned to 16 bytes)
+    ; Set up stack
     mov esp, stack_top
     
-    ; Save multiboot info pointer (passed by bootloader in EBX)
+    ; Save multiboot info pointer
     mov [multiboot_info_ptr], ebx
     
-    ; Clear direction flag (std functions expect forward movement)
+    ; Clear direction flag
     cld
     
-    ; Optional: Verify CPU features here (FPU, SSE, etc.)
-    
-    ; Call kernel main function
+    ; Call kernel main
     call main
     
-    ; If kernel_main returns (shouldn't happen), halt the system
-    cli                         ; Disable interrupts
+    ; Halt if main returns
+    cli
 .hang:
-    hlt                         ; Halt CPU
-    jmp .hang                   ; In case of NMI
+    hlt
+    jmp .hang
 
 section .bss
-align 16                       ; Align stack to 16 bytes for performance
+align 16
 stack_bottom:
     resb 16384                 ; 16KB stack
 stack_top:
 
-; Store multiboot info pointer (32-bit on x86)
 multiboot_info_ptr: 
     resd 1                     ; Reserve 4 bytes
 
-section .note.GNU-stack noalloc noexec nowrite progbits ; Mark stack as non-executable
+section .note.GNU-stack noalloc noexec nowrite progbits
