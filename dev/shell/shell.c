@@ -40,6 +40,7 @@ int help_main(int argc, char **argv) {
 shell_command_t shell_commands[] = {
     { "bc",       "Basic calculator",                      bc_main       },
     { "cat",      "Show the contents of a file",           cat_main      },
+    { "cp",       "Copy/move file to a destination",       cp_main       },
     { "clear",    "Clear the screen",                      clear_main    },
     { "cowsay",   "Make a cow say a line",                 cowsay_main   },
     { "cpuinfo",  "Print processor information",           cpuinfo_main  },
