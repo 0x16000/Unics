@@ -1,31 +1,29 @@
 ENTRY(_start)
 
 SECTIONS {
-    /* The kernel will be loaded at 1MB */
+    /* Kernel load address */
     . = 1M;
 
-    .multiboot ALIGN(4K) : {
-        /* Ensure multiboot header is at the beginning */
-        *(.multiboot)
+    /* Multiboot header must be first and kept */
+    .multiboot ALIGN(4) : {
+        KEEP(*(.multiboot))
     }
 
-    .text ALIGN(4K) : {
+    .text ALIGN(4) : {
         *(.text)
     }
 
-    .rodata ALIGN(4K) : {
+    .rodata ALIGN(4) : {
         *(.rodata*)
     }
 
-    .data ALIGN(4K) : {
+    .data ALIGN(4) : {
         *(.data)
     }
 
-    .bss ALIGN(4K) : {
+    .bss ALIGN(4) : {
         *(COMMON)
         *(.bss)
-        
-        /* Symbol for the end of kernel memory */
         __bitmap_start = .;
     }
 

@@ -3,6 +3,7 @@
 #include <arch/i386/cpu.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 /* Panic colors */
 #define PANIC_FG VGA_COLOR_WHITE

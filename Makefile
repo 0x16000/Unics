@@ -1,118 +1,141 @@
-# Toolchain
-CC = gcc
-AS = nasm
-LD = ld
-OBJCOPY = objcopy
+# Makefile for Unics OS Project - Optimized and Enhanced
 
-# Flags
-CFLAGS = -m32 -std=gnu99 -ffreestanding -Wall -Wextra \
-         -Iusr/include -I. -nostdlib -Iinclude -fno-stack-protector
-ASFLAGS = -f elf32
-LDFLAGS = -m elf_i386 -T linker.ld -nostdlib
+# --- Configuration ---
+KERNEL_NAME    := unics
+ARCH           := i386
+ARCHDIR        := arch/$(ARCH)
 
-# Outputs
-KERNEL = unics.bin
-ISO = unics.iso
+# --- Toolchain Configuration ---
+CC             := gcc
+AS             := nasm
+LD             := ld
+OBJCOPY        := objcopy
+GRUB_MKRESCUE  := grub-mkrescue
+QEMU           := qemu-system-i386
 
-# Sources
-BOOT_SRC = boot/boot.s
-KERNEL_SRCS = \
-    sbin/init/init.c \
-    usr/drivers/vga.c \
-    usr/drivers/fs.c \
-    lib/libc/string.c \
-    dev/shell/shell.c \
-    dev/keyboard/keyboard.c \
-    usr/sbin/login/login.c \
-    lib/libc/unistd.c \
-    lib/libc/stdio.c \
-    lib/libc/ctype.c \
-    lib/libc/cdefs.c \
-    lib/libc/errno.c \
-    lib/libc/time.c \
-    lib/libc/stdlib.c \
-    bin/clear.c \
-    bin/yes.c \
-    bin/echo.c \
-    bin/uname.c \
-    bin/shutdown.c \
-    bin/reboot.c \
-    bin/cowsay.c \
-    bin/whoami.c \
-    bin/rand.c \
-    bin/factor.c \
-    bin/tty.c \
-    bin/cpuinfo.c \
-    bin/fetch.c \
-    bin/touch.c \
-    bin/ls.c \
-    bin/cat.c \
-    bin/ed.c \
-    bin/rm.c \
-    bin/mv.c \
-    bin/expr.c
+# --- Directory Structure ---
+SRCDIR         := .
+BOOTDIR        := boot
+INCDIR         := usr/include
+ISODIR         := isodir
+BUILDDIR       := build
 
-ASM_SRCS = $(BOOT_SRC) arch/i386/cpu.s  # Added cpu.s here
+# --- Output Files ---
+KERNEL_BIN     := $(KERNEL_NAME).bin
+ISO_IMAGE      := $(KERNEL_NAME).iso
 
-# Headers
-HEADERS = \
-    usr/include/io.h \
-    usr/include/sys/multiboot.h \
-    usr/include/vga.h \
-    usr/include/string.h \
-    usr/include/shell.h \
-    usr/include/login.h \
-    usr/include/keyboard.h \
-    usr/include/sys/syscall.h \
-    usr/include/sys/unistd.h \
-    usr/include/stddef.h \
-    usr/include/stdint.h \
-    usr/include/stdarg.h \
-    usr/include/align.h \
-    usr/include/stdio.h \
-    usr/include/stdlib.h \
-    usr/include/aio.h \
-    usr/include/sys/cdefs.h \
-    usr/include/sys/ctype.h \
-    usr/include/sys/fs.h \
-    usr/include/errno.h \
-    usr/include/time.h \
-    arch/i386/cpu.h \
-    usr/include/sys/bootscreen.h \
-    usr/include/sys/types.h
+# --- Compiler/Linker Flags ---
+OPTIMIZATION   := -O2
+WARNINGS       := -Wall -Wextra -Werror=implicit-function-declaration \
+                  -Werror=incompatible-pointer-types -Werror=int-conversion
+SECURITY       := -fno-stack-protector -fno-PIE -fno-PIC
 
-# Objects
-BOOT_OBJ = $(BOOT_SRC:.s=.o)
-KERNEL_OBJS = $(KERNEL_SRCS:.c=.o) $(BOOT_OBJ) arch/i386/cpu.o  # Added cpu.o here
+CFLAGS         := -m32 -std=gnu99 -ffreestanding $(OPTIMIZATION) $(WARNINGS) $(SECURITY) \
+                  -I$(INCDIR) -I. -nostdlib -fno-common -fno-builtin \
+                  -fno-omit-frame-pointer -ggdb3
+ASFLAGS        := -f elf32 -F dwarf -g
+LDFLAGS        := -m32 -nostdlib -nostartfiles -T linker.ld -Wl,--gc-sections \
+                  -Wl,-Map=$(BUILDDIR)/$(KERNEL_NAME).map
 
-# Targets
-.PHONY: all clean iso run
+QEMU_OPTS      ?= -enable-kvm -m 1024 -serial stdio -vga std
 
-all: $(KERNEL)
+# --- Automatic Source Discovery ---
+BOOT_SRC       := $(BOOTDIR)/boot.s
+ASM_SRCS       := $(BOOT_SRC) $(wildcard $(ARCHDIR)/*.s)
+KERNEL_SRCS    := $(shell find sbin usr lib dev bin -name '*.c' 2>/dev/null)
+HEADERS        := $(shell find $(INCDIR) -name '*.h' 2>/dev/null) \
+                  $(wildcard $(ARCHDIR)/*.h)
 
-iso: $(ISO)
+# --- Build Artifacts ---
+ASM_OBJS       := $(patsubst %.s,$(BUILDDIR)/%.o,$(ASM_SRCS))
+C_OBJS         := $(patsubst %.c,$(BUILDDIR)/%.o,$(KERNEL_SRCS))
+OBJS           := $(ASM_OBJS) $(C_OBJS)
+DEPS           := $(C_OBJS:.o=.d)
 
-run: $(ISO)
-	qemu-system-i386 -enable-kvm -m 1024 -cdrom $(ISO)
+# --- Phony Targets ---
+.PHONY: all clean iso run debug run-nokvm prepare distclean help
 
-$(KERNEL): $(KERNEL_OBJS) linker.ld
-	$(LD) $(LDFLAGS) -o $@ $(KERNEL_OBJS)
+# --- Default Target ---
+all: $(BUILDDIR)/$(KERNEL_BIN)
 
-%.o: %.c $(HEADERS)
-	$(CC) $(CFLAGS) -c $< -o $@
+# --- Help Target ---
+help:
+	@echo "Available targets:"
+	@echo "  all       - Build the kernel (default target)"
+	@echo "  clean     - Remove most build artifacts"
+	@echo "  distclean - Remove all build artifacts and ISOs"
+	@echo "  iso       - Create bootable ISO image"
+	@echo "  run       - Run in QEMU with KVM acceleration"
+	@echo "  run-nokvm - Run in QEMU without KVM acceleration"
+	@echo "  debug     - Run in QEMU with GDB server"
+	@echo "  prepare   - Prepare ISO directory structure"
+	@echo "  help      - Show this help message"
 
-%.o: %.s
-	$(AS) $(ASFLAGS) $< -o $@  # This rule will apply to cpu.s as well
+# --- Build Rules ---
+$(BUILDDIR)/$(KERNEL_BIN): $(OBJS) linker.ld | $(BUILDDIR)
+	@echo "[LD] Linking $@"
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) -lgcc
+	@echo "[INFO] Kernel size: $$(stat -c%s $@) bytes"
 
-$(ISO): $(KERNEL)
-	mkdir -p isodir/boot/grub
-	cp $(KERNEL) isodir/boot/
-	echo 'menuentry "Unics" {' > isodir/boot/grub/grub.cfg
-	echo '  multiboot /boot/$(KERNEL)' >> isodir/boot/grub/grub.cfg
-	echo '  boot' >> isodir/boot/grub/grub.cfg
-	echo '}' >> isodir/boot/grub/grub.cfg
-	grub-mkrescue -o $(ISO) isodir
-	rm -rf isodir
+# --- Pattern Rules ---
+$(BUILDDIR)/%.o: %.c $(HEADERS) | $(BUILDDIR)
+	@mkdir -p $(@D)
+	@echo "[CC] Compiling $<"
+	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
+$(BUILDDIR)/%.o: %.s | $(BUILDDIR)
+	@mkdir -p $(@D)
+	@echo "[AS] Assembling $<"
+	$(AS) $(ASFLAGS) $< -o $@
+
+# --- Directory Creation ---
+$(BUILDDIR):
+	@mkdir -p $@
+
+# --- ISO Preparation ---
+prepare: $(BUILDDIR)/$(KERNEL_BIN)
+	@echo "[PREP] Preparing ISO directory structure"
+	@rm -rf $(ISODIR)
+	@mkdir -p $(ISODIR)/boot/grub
+	@cp $(BUILDDIR)/$(KERNEL_BIN) $(ISODIR)/boot/
+	@printf 'menuentry "%s" {\n  multiboot /boot/%s\n  boot\n}\n' \
+		"$(KERNEL_NAME)" "$(KERNEL_BIN)" > $(ISODIR)/boot/grub/grub.cfg
+
+# --- ISO Creation ---
+iso: prepare
+	@echo "[ISO] Creating ISO image: $(ISO_IMAGE)"
+	@$(GRUB_MKRESCUE) -o $(ISO_IMAGE) $(ISODIR) >/dev/null 2>&1
+	@rm -rf $(ISODIR)
+	@echo "[INFO] ISO created: $(ISO_IMAGE)"
+
+# --- QEMU Targets ---
+run: iso
+	@command -v $(QEMU) >/dev/null 2>&1 || { \
+		echo >&2 "QEMU not found. Please install QEMU."; exit 1; }
+	@echo "[QEMU] Launching with KVM acceleration"
+	@$(QEMU) $(QEMU_OPTS) -cdrom $(ISO_IMAGE)
+
+debug: iso
+	@command -v $(QEMU) >/dev/null 2>&1 || { \
+		echo >&2 "QEMU not found. Please install QEMU."; exit 1; }
+	@echo "[QEMU] Launching with GDB server (port 1234)"
+	@$(QEMU) -m 1024 -cdrom $(ISO_IMAGE) -s -S -serial stdio
+
+run-nokvm: iso
+	@command -v $(QEMU) >/dev/null 2>&1 || { \
+		echo >&2 "QEMU not found. Please install QEMU."; exit 1; }
+	@echo "[QEMU] Launching without KVM acceleration"
+	@$(QEMU) -m 1024 -cdrom $(ISO_IMAGE) -serial stdio
+
+# --- Clean Targets ---
 clean:
-	rm -f $(KERNEL_OBJS) $(KERNEL) $(ISO)
+	@echo "[CLEAN] Removing build artifacts"
+	@rm -rf $(BUILDDIR)
+
+distclean: clean
+	@echo "[CLEAN] Removing all generated files"
+	@rm -f $(ISO_IMAGE)
+	@rm -rf $(ISODIR)
+
+# --- Dependency Inclusion ---
+-include $(DEPS)
