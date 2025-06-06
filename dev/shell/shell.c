@@ -59,6 +59,7 @@ shell_command_t shell_commands[] = {
     { "whoami",   "Print user information",                whoami_main   },
     { "yes",      "Repeatedly print a string",             yes_main      },
     { "mv",       "Move file/folder",                      mv_main       },
+    { "ps",       "View processes",                        ps_main       },
 };
 
 

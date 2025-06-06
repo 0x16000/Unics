@@ -8,6 +8,7 @@
 #include <arch/i386/cpu.h>
 #include <time.h>
 #include <sys/fs.h>
+#include <sys/process.h>
 
 extern shell_command_t shell_commands[];
 extern size_t shell_commands_count;
@@ -71,6 +72,11 @@ int main(void) {
     fs_init();
     vga_puts("Root filesystem: running from RAM\n");
     delay(100000);
+
+    // Create processes
+    process_init();
+    process_create("init", 0);
+    process_create("shell", 1);
     
     // Initialize keyboard
     kb_init();
