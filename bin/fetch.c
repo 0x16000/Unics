@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <vers.h>
 #include <arch/i386/cpu.h>
+
+// Print the CPU brand string using extended CPUID calls
 static void print_cpu_brand() {
     char brand[49] = {0};
     
-    // Check if extended CPUID is supported
     unsigned int max_extended;
     asm volatile("cpuid" : "=a"(max_extended) : "a"(0x80000000) : "ebx", "ecx", "edx");
     
@@ -16,44 +17,48 @@ static void print_cpu_brand() {
             : "a"(0x80000002)
         );
         asm volatile(
-            "cpuid"
+            "cpuid\n\t"
             : "=a"(brand_ptr[4]), "=b"(brand_ptr[5]), "=c"(brand_ptr[6]), "=d"(brand_ptr[7]) 
             : "a"(0x80000003)
         );
         asm volatile(
-            "cpuid"
+            "cpuid\n\t"
             : "=a"(brand_ptr[8]), "=b"(brand_ptr[9]), "=c"(brand_ptr[10]), "=d"(brand_ptr[11]) 
             : "a"(0x80000004)
         );
         
-        // Clean up the brand string
+        // Skip leading spaces in the brand string
         char *p = brand;
-        while (*p == ' ') p++;  // Skip leading spaces
-        printf("%.48s", p);     // Print max 48 chars of cleaned string
+        while (*p == ' ') p++;
+        printf("%.48s", p);
     } else {
         printf("Unknown CPU");
     }
 }
+
 int fetch_main(int argc, char **argv) {
-    (void)argc; // Suppress unused parameter warnings
-    (void)argv; // Suppress unused parameter warnings
-    printf("    ,        ,        root@unics$\n");
-    printf("   /(        )`       ---------------\n");
-    printf("   \\ \\___   / |       Kernel: ");
-    printf(OS_NAME);
-    printf(" ");
-    printf(OS_VERSION);
+    (void)argc;
+    (void)argv;
+
     printf("\n");
-    printf("   /- _  `-/  '       Host: root\n");
-    printf("  (/\\/ \\ \\   /\\       Shell: sh\n");
-    printf("  / /   | `    \\      CPU: ");
+    printf("                        `          root@unics\n");
+    printf("  `.`....---.......--.```   -/     ------------\n");
+    printf("  +o   .--`         /y:`      +.   OS: " OS_NAME "\n");
+    printf("   yo`:.            :o      `+-    Host: root\n");
+    printf("    y/               -/`   -o/     Kernel: " OS_VERSION "\n");
+    printf("   .-                  ::/sy+:.    resolution: 640x400\n");
+    printf("   /                     `--  /    fs: unics_fs\n");
+    printf("  `:                          :`   Shell: sh\n");
+    printf("  `:                          :`   CPU: ");
     print_cpu_brand();
     printf("\n");
-    printf("  O O   ) /    |\n");
-    printf("  `-^--'`<     '\n");
-    printf(" (_.)  _  )   /\n");
-    printf("  `.___/`    /\n");
-    printf("    `-----' /\n");
-    printf("          `\n");
+    printf("   /                          /    \n");
+    printf("   .-                        -.    \n");
+    printf("    --                      -.     \n");
+    printf("     `:`                  `:`      \n");
+    printf("       .--             `--.        \n");
+    printf("          .---.....----.           \n");
+    printf("                                   \n");
+
     return 0;
 }
