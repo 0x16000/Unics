@@ -9,6 +9,7 @@
 #include <time.h>
 #include <sys/fs.h>
 #include <sys/process.h>
+#include <vmm.h>
 
 extern shell_command_t shell_commands[];
 extern size_t shell_commands_count;
@@ -84,6 +85,11 @@ int main(void) {
 
     fs_close(&root_fs, "README"); // close file when done
 
+    delay(100000);
+
+    // Initialize virtual memory
+    vmm_init();
+    vga_puts("vmm: Virtual memory initialized\n");
     delay(100000);
 
     // Create processes

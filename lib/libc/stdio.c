@@ -442,16 +442,37 @@ int vprintf(const char *format, va_list args) {
                 
                 case 'x':
                 case 'X': {
-                    unsigned int num = va_arg(args, unsigned int);
-                    itoa(num, str, 16);
-                    
-                    if (alternate && num != 0) {
-                        vga_puts("0x");
-                        chars_written += 2;
-                    }
-                    chars_written += width > (int)__strlen(str) ? width : (int)__strlen(str);
+                unsigned int num = va_arg(args, unsigned int);
+        itoa(num, str, 16);
+
+        int len = __strlen(str);
+
+        // Prefix "0x" if alternate form
+        if (alternate && num != 0) {
+            vga_puts("0x");
+            chars_written += 2;
+            width -= 2;
+        }
+
+        if (precision >= 0 && precision > len) {
+        __pad_output(precision - len, '0');
+        chars_written += (precision - len);
+        } else if (zero_pad && !left_align && width > len) {
+            __pad_output(width - len, '0');
+            chars_written += (width - len);
+                  }
+
+                vga_puts(str);
+                    chars_written += len;
+
+                       if (left_align && width > len) {
+                          __pad_output(width - len, ' ');
+                    chars_written += (width - len);
+                  }
+
                     break;
                 }
+
                 
                 case 'c': {
                     char c = (char)va_arg(args, int);
