@@ -78,24 +78,27 @@ void vga_putchar(char c) {
         break;
     case '\b':
         if (vga_column > 0) {
-            vga_column--;
-        } else if (vga_row > 0) {
-            vga_row--;
-            vga_column = VGA_WIDTH - 1;
-        }
-        vga_buffer[vga_row * VGA_WIDTH + vga_column] = vga_entry(' ', vga_color);
-        break;
-    case '\t': {
-        size_t next_tab = (vga_column + VGA_TAB_WIDTH) & ~(VGA_TAB_WIDTH - 1);
-        if (next_tab >= VGA_WIDTH) {
-            vga_column = 0;
-            if (++vga_row >= VGA_HEIGHT)
-                vga_scroll();
-        } else {
-            vga_column = next_tab;
-        }
-        break;
+           vga_column--;
+    }   else if (vga_row > 0) {
+           vga_row--;
+           vga_column = VGA_WIDTH - 1;
     }
+    vga_buffer[vga_row * VGA_WIDTH + vga_column] = vga_entry(' ', vga_color);
+    vga_update_cursor(vga_column, vga_row);  // Add this line
+    break;
+    case '\t': {
+    size_t next_tab = (vga_column + VGA_TAB_WIDTH) & ~(VGA_TAB_WIDTH - 1);
+    while (vga_column < next_tab && vga_column < VGA_WIDTH) {
+        vga_buffer[vga_row * VGA_WIDTH + vga_column] = vga_entry(' ', vga_color);
+        vga_column++;
+    }
+    if (vga_column >= VGA_WIDTH) {
+        vga_column = 0;
+        if (++vga_row >= VGA_HEIGHT)
+            vga_scroll();
+    }
+    break;
+}
     default:
         if (c >= ' ' && c <= '~') {
             vga_buffer[vga_row * VGA_WIDTH + vga_column] = vga_entry(c, vga_color);
@@ -155,6 +158,8 @@ void vga_update_cursor(int x, int y) {
     if (!vga_buffer) return;
     if (x < 0 || x >= VGA_WIDTH || y < 0 || y >= VGA_HEIGHT)
         return;
+    vga_column = x;
+    vga_row = y;
     uint16_t pos = (uint16_t)(y * VGA_WIDTH + x);
     outb(VGA_CRTC_ADDR, VGA_CURSOR_LOW_REG);
     outb(VGA_CRTC_DATA, (uint8_t)(pos & 0xFF));
