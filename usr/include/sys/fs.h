@@ -8,6 +8,9 @@
 #define MAX_FILES 32
 #define MAX_FILENAME_LEN 32
 #define MAX_FILE_SIZE 4096
+#ifndef PATH_MAX
+#define PATH_MAX 256
+#endif
 
 typedef struct File {
     char name[MAX_FILENAME_LEN];

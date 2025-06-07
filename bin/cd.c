@@ -2,10 +2,34 @@
 #include <stdio.h>
 #include <string.h>
 
-#define PATH_MAX 256
-
 extern File *current_dir;
 char cwd[PATH_MAX] = "/";
+
+static void update_cwd() {
+    if (!current_dir) {
+        strcpy(cwd, "/");
+        return;
+    }
+
+    // Build path by traversing up to root
+    char temp[PATH_MAX] = {0};
+    File *dir = current_dir;
+    
+    while (dir && dir->parent) {
+        char path_part[PATH_MAX] = {0};
+        snprintf(path_part, sizeof(path_part), "/%s", dir->name);
+        memmove(temp + strlen(path_part), temp, strlen(temp) + 1);
+        memcpy(temp, path_part, strlen(path_part));
+        dir = dir->parent;
+    }
+
+    // Handle root case
+    if (strlen(temp) == 0) {
+        strcpy(temp, "/");
+    }
+
+    strncpy(cwd, temp, PATH_MAX);
+}
 
 int cd_main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -17,7 +41,7 @@ int cd_main(int argc, char *argv[]) {
 
     if (strcmp(target, "/") == 0) {
         current_dir = NULL;
-        strncpy(cwd, "/", PATH_MAX);
+        update_cwd();
         return 0;
     }
 
@@ -27,24 +51,17 @@ int cd_main(int argc, char *argv[]) {
         } else {
             current_dir = NULL; // already at root
         }
-
-        // Update cwd string
-        if (!current_dir) {
-            strncpy(cwd, "/", PATH_MAX);
-        } else {
-            snprintf(cwd, PATH_MAX, "/%s", current_dir->name);
-        }
+        update_cwd();
         return 0;
     }
 
     // Search for directory under current_dir (or root)
     for (size_t i = 0; i < root_fs.file_count; i++) {
         File *f = &root_fs.files[i];
-
         if (f->is_dir && strcmp(f->name, target) == 0 &&
             ((current_dir == NULL && f->parent == NULL) || (f->parent == current_dir))) {
             current_dir = f;
-            snprintf(cwd, PATH_MAX, "/%s", current_dir->name);
+            update_cwd();
             return 0;
         }
     }

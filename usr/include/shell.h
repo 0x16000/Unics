@@ -7,11 +7,14 @@
 #include <vga.h>
 #include <io.h>
 #include <string.h>
+#include <sys/fs.h>
 
 #define SHELL_MAX_INPUT_LENGTH 256
 #define SHELL_MAX_ARGS 32
 #define SHELL_MAX_PATH_LENGTH 128
 #define SHELL_PROMPT "unics$ "
+
+extern char cwd[PATH_MAX];
 
 // Command structure
 typedef struct {
@@ -21,10 +24,10 @@ typedef struct {
 } shell_command_t;
 
 // Shell context structure
+// In shell.h, modify shell_context_t to remove current_path:
 typedef struct {
     char input_buffer[SHELL_MAX_INPUT_LENGTH];
     size_t input_length;
-    char current_path[SHELL_MAX_PATH_LENGTH];
     shell_command_t *commands;
     size_t num_commands;
     bool running;

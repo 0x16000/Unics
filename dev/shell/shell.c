@@ -78,9 +78,9 @@ void shell_init(shell_context_t *ctx, shell_command_t *commands, size_t num_comm
     ctx->commands = commands;
     ctx->num_commands = num_commands;
     ctx->running = true;
-    strcpy(ctx->current_path, "/");
 
     // Set default VGA color
+    vga_putchar('\n');  // Start with a new line
     vga_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
 }
 
@@ -129,7 +129,12 @@ void shell_run(shell_context_t *ctx) {
 
 // Print the shell prompt
 void shell_print_prompt(shell_context_t *ctx) {
-    vga_puts(ctx->current_path);
+    (void)ctx; // Unused parameter
+    
+    // Print the prompt with brackets around current working directory
+    vga_puts("[");
+    vga_puts(cwd);
+    vga_puts("] ");
     vga_puts(SHELL_PROMPT);
 }
 
