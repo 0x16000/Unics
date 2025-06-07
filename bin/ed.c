@@ -46,10 +46,7 @@ void print_help(void) {
 
 void grow_buffer(size_t min_size) {
     if (buf_size >= min_size) return;
-    size_t new_size = buf_size ? buf_size : BUFFER_INCREMENT;
-    while (new_size < min_size) {
-        new_size += BUFFER_INCREMENT;
-    }
+    size_t new_size = ((min_size / BUFFER_INCREMENT) + 1) * BUFFER_INCREMENT;
     char *new_buffer = realloc(buffer, new_size);
     if (!new_buffer) {
         printf("Out of memory\n");
@@ -60,18 +57,24 @@ void grow_buffer(size_t min_size) {
 }
 
 void insert_text(const char *text) {
+    if (!text) return;
     size_t len = strlen(text);
-    grow_buffer(content_len + len + 2);  // +1 for '\n' +1 for '\0'
+    if (len == 0) return;  // Skip empty lines
+    
+    grow_buffer(content_len + len + 2);
     memcpy(buffer + content_len, text, len);
     content_len += len;
-    buffer[content_len++] = '\n';  // add newline after each inserted line
+    buffer[content_len++] = '\n';
     buffer[content_len] = '\0';
 }
-
 int write_to_file(const char *filename) {
+    if (!filename || !*filename) {
+        printf("Invalid filename\n");
+        return -1;
+    }
+
     int rc = fs_create(filename);
     if (rc != 0 && rc != -3) { 
-        // -3 = file already exists, which is fine
         printf("Error creating file: %d\n", rc);
         return -1;
     }
@@ -83,13 +86,13 @@ int write_to_file(const char *filename) {
     }
 
     size_t written = fs_write(&root_fs, filename, buffer, content_len);
+    fs_close(&root_fs, filename);  // Always close
+    
     if (written != content_len) {
         printf("Error writing to file: wrote %zu of %zu bytes\n", written, content_len);
-        fs_close(&root_fs, filename);
         return -1;
     }
 
-    fs_close(&root_fs, filename);
     printf("Wrote %zu bytes to %s\n", content_len, filename);
     return 0;
 }
