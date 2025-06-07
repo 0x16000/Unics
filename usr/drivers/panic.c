@@ -15,6 +15,8 @@
 #define PANIC_HEADER " KERNEL PANIC "
 #define PANIC_WIDTH 80
 #define PANIC_DIVIDER "======================================================="
+#define PANIC_DIVIDER_ROW 7
+#define PANIC_INFO_ROW 9
 
 noreturn void panic(const char *message, const char *file, uint32_t line) {
     /* Setup panic screen */
@@ -28,22 +30,23 @@ noreturn void panic(const char *message, const char *file, uint32_t line) {
     /* Main error message */
     vga_set_color(PANIC_FG, PANIC_BG);
     vga_puts_at("ERROR: ", 2, 2);
-    vga_puts_at(message, 9, 2);
+    vga_puts_at(message ? message : "(no message)", 9, 2);
 
     /* Location info */
     vga_puts_at("File: ", 2, 4);
-    vga_puts_at(file, 8, 4);
+    vga_puts_at(file ? file : "(unknown)", 8, 4);
     
     char line_str[16];
+    line_str[0] = '\0';
     itoa(line, line_str, 10);
     vga_puts_at("Line: ", 2, 5);
     vga_puts_at(line_str, 8, 5);
 
     /* Divider */
-    vga_puts_at(PANIC_DIVIDER, (PANIC_WIDTH - strlen(PANIC_DIVIDER)) / 2, 7);
+    vga_puts_at(PANIC_DIVIDER, (PANIC_WIDTH - strlen(PANIC_DIVIDER)) / 2, PANIC_DIVIDER_ROW);
 
     /* System state info */
-    vga_puts_at("System halted. No safe recovery possible.", 2, 9);
+    vga_puts_at("System halted. No safe recovery possible.", 2, PANIC_INFO_ROW);
 
     /* Halt the system */
     panic_halt();
