@@ -12,7 +12,7 @@
 #define SHELL_MAX_INPUT_LENGTH 256
 #define SHELL_MAX_ARGS 32
 #define SHELL_MAX_PATH_LENGTH 128
-#define SHELL_PROMPT "unics$ "
+#define SHELL_PROMPT "$ "
 
 extern char cwd[PATH_MAX];
 
