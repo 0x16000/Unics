@@ -40,11 +40,11 @@ int main(void) {
     vga_puts("Copyright (c) 2025 0x16000. All rights reserved.\n");
     vga_puts("\n");
     
-    delay(150000);
+    delay(100000);
     
     // System identification
     vga_puts("CPU: i386-class processor\n");
-    delay(100000);
+    delay(50000);
     
     vga_puts("\n");
     
@@ -59,7 +59,7 @@ int main(void) {
     delay(100000);
     
     vga_puts("sc0: <System console> at flags 0x100 on isa0\n");
-    delay(100000);
+    delay(50000);
     
     vga_puts("\n");
     
@@ -96,7 +96,7 @@ int main(void) {
     // Initialize physical memory manager
     pmm_init();
     vga_puts("pmm: Physical memory initialized\n");
-    delay(100000);
+    delay(50000);
 
     // Create processes
     process_init();
