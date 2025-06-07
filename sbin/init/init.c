@@ -10,6 +10,7 @@
 #include <sys/fs.h>
 #include <sys/process.h>
 #include <vmm.h>
+#include <pmm.h>
 
 extern shell_command_t shell_commands[];
 extern size_t shell_commands_count;
@@ -90,6 +91,11 @@ int main(void) {
     // Initialize virtual memory
     vmm_init();
     vga_puts("vmm: Virtual memory initialized\n");
+    delay(100000);
+
+    // Initialize physical memory manager
+    pmm_init();
+    vga_puts("pmm: Physical memory initialized\n");
     delay(100000);
 
     // Create processes
