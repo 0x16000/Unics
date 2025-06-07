@@ -128,14 +128,14 @@ void shell_run(shell_context_t *ctx) {
 }
 
 // Print the shell prompt
+// Print the shell prompt
+// Print the shell prompt
 void shell_print_prompt(shell_context_t *ctx) {
-    (void)ctx; // Unused parameter
-    
-    // Print the prompt with brackets around current working directory
-    vga_puts("[");
-    vga_puts(cwd);
-    vga_puts("] ");
-    vga_puts(SHELL_PROMPT);
+    (void)ctx;
+
+    vga_puts("root@unics:");
+    vga_puts(cwd);  // assuming cwd contains something like "/home/user"
+    vga_puts(" # ");
 }
 
 // Process the input line
