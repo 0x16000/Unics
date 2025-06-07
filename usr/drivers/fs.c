@@ -25,54 +25,96 @@ void fs_init(void) {
 }
 
 int fs_create(const char *filename) {
-        if (root_fs.file_count >= MAX_FILES) {
-        return -1;
+    // Check if filesystem is full
+    if (root_fs.file_count >= MAX_FILES) {
+        return -1; // Too many files
     }
 
+    // Check filename length
     if (strlen(filename) >= MAX_FILENAME_LEN) {
         return -2; // Filename too long
     }
 
     // Check if file already exists
     for (size_t i = 0; i < root_fs.file_count; i++) {
-        if (strcmp(root_fs.files[i].name, filename) == 0) {
+        if (strcmp(root_fs.files[i].name, filename) == 0 && 
+            root_fs.files[i].parent == current_dir) {
             return -3; // File already exists
         }
     }
 
-    // Create new file
-    File *new_file = &root_fs.files[root_fs.file_count];
-    strncpy(new_file->name, filename, MAX_FILENAME_LEN);
-    new_file->data = malloc(MAX_FILE_SIZE);
-    if (!new_file->data) {
-        return -4; // Memory allocation failed
+    // Ensure current_dir still exists (could have been deleted)
+    bool parent_exists = false;
+    for (size_t i = 0; i < root_fs.file_count; i++) {
+        if (&root_fs.files[i] == current_dir) {
+            parent_exists = true;
+            break;
+        }
+    }
+    if (!parent_exists) {
+        return -4; // Parent directory no longer exists
     }
 
+    // Allocate new file
+    File *new_file = &root_fs.files[root_fs.file_count];
+    
+    // Copy filename (ensuring null-termination)
+    strncpy(new_file->name, filename, MAX_FILENAME_LEN - 1);
+    new_file->name[MAX_FILENAME_LEN - 1] = '\0';
+
+    // Allocate data (if not a directory)
+    new_file->data = malloc(MAX_FILE_SIZE);
+    if (!new_file->data) {
+        return -5; // Memory allocation failed
+    }
+
+    // Initialize file metadata
     new_file->size = 0;
     new_file->is_open = false;
     new_file->is_dir = false;
     new_file->parent = current_dir;
     new_file->position = 0;
-    root_fs.file_count++;
 
+    root_fs.file_count++;
     return 0; // Success
 }
 
 int fs_delete(const char *filename) {
     for (size_t i = 0; i < root_fs.file_count; i++) {
         if (strcmp(root_fs.files[i].name, filename) == 0) {
-            if (root_fs.files[i].is_open) return -1;
-            if (root_fs.files[i].is_dir) return -3; // Can't delete directory
+            File *file = &root_fs.files[i];
 
-            free(root_fs.files[i].data);
+            // Check if file is open
+            if (file->is_open) {
+                return -1; // File is open
+            }
+
+            // Handle directories
+            if (file->is_dir) {
+                // Check if directory is empty
+                for (size_t j = 0; j < root_fs.file_count; j++) {
+                    if (root_fs.files[j].parent == file) {
+                        return -3; // Directory not empty
+                    }
+                }
+            } else {
+                // Free file data (only if not a directory)
+                if (file->data) {
+                    free(file->data);
+                    file->data = NULL;
+                }
+            }
+
+            // Shift remaining files down
             for (size_t j = i; j < root_fs.file_count - 1; j++) {
                 root_fs.files[j] = root_fs.files[j + 1];
             }
             root_fs.file_count--;
-            return 0;
+
+            return 0; // Success
         }
     }
-    return -2;
+    return -2; // File not found
 }
 
 int fs_open(FileSystem *fs, const char *filename) {
