@@ -4,6 +4,7 @@
 #include <keyboard.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include <login.h>
 #include <arch/i386/cpu.h>
 #include <time.h>
