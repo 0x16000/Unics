@@ -4,6 +4,28 @@
 #include <io.h>
 
 /**
+ * Attempts a VirtualBox reboot via the 0x4004 port.
+ * This method is specific to VirtualBox.
+ */
+static bool try_vbox_reboot() {
+    vga_puts("Attempting VirtualBox reboot...\n");
+
+    // Write reboot command to VirtualBox power management port (0x4004)
+    __asm__ volatile (
+        "outw %w0, %w1"
+        :
+        : "a" ((uint16_t)0x3400), "Nd" ((uint16_t)0x4004)
+        : "memory"
+    );
+
+    // Wait to see if reboot occurs
+    for (int i = 0; i < 1000000; i++) {
+        io_wait();
+    }
+    return false;  // Return false if reboot did not occur
+}
+
+/**
  * Force a system reset by triggering a triple fault.
  * This is a last-resort fallback mechanism.
  */
@@ -86,13 +108,18 @@ int reboot_main(int argc, char **argv) {
         vga_puts("Forced reboot option detected...\n");
     }
 
-    // Try the 8042 controller reset first
+    // Try VirtualBox reboot first
+    if (try_vbox_reboot()) {
+        return 0;
+    }
+
+    // Try the 8042 controller reset next
     if (try_8042_reset()) {
-        return 0;  // Successfully rebooted using the 8042 controller
+        return 0;
     }
 
     // If the 8042 reset failed, attempt the fallback reset method
-    vga_puts("Primary reset method failed, trying fallback...\n");
+    vga_puts("Primary reset methods failed, trying fallback...\n");
     system_fallback_reset();
 
     // We should never reach here as the system will be reset or halted
@@ -101,6 +128,5 @@ int reboot_main(int argc, char **argv) {
         __asm__ volatile ("hlt");
     }
 
-    return 1;  // Return failure if we somehow reached here
+    return 1;
 }
-

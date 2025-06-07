@@ -11,6 +11,26 @@ static void delay(uint32_t count) {
 }
 
 /**
+ * Attempts a VirtualBox shutdown via the 0x4004 port.
+ * This method is specific to VirtualBox.
+ */
+static bool try_vbox_shutdown() {
+    vga_puts("Attempting VirtualBox shutdown...\n");
+
+    // Write shutdown command to VirtualBox power management port (0x4004)
+    __asm__ volatile (
+        "outw %w0, %w1"
+        :
+        : "a" ((uint16_t)0x3400), "Nd" ((uint16_t)0x4004)
+        : "memory"
+    );
+
+    // Wait to see if shutdown occurs
+    delay(10000);
+    return false;  // Return false if shutdown did not occur
+}
+
+/**
  * Attempts to initiate an ACPI shutdown via the 0x604 port.
  * Returns true if shutdown was initiated, false otherwise.
  */
@@ -103,14 +123,19 @@ int shutdown_main(int argc, char **argv) {
         vga_puts("Forcing shutdown...\n");
     }
 
-    // Try ACPI shutdown first
+    // Try VirtualBox shutdown first (if running in VirtualBox)
+    if (try_vbox_shutdown()) {
+        return 0;
+    }
+
+    // Try ACPI shutdown next
     if (try_acpi_shutdown()) {
-        return 0;  // Return success if ACPI shutdown was successful
+        return 0;
     }
 
     // If ACPI shutdown failed, try Bochs/QEMU shutdown
     if (try_bochs_shutdown()) {
-        return 0;  // Return success if Bochs/QEMU shutdown was successful
+        return 0;
     }
 
     // If all shutdown methods failed, force a reset
@@ -120,6 +145,5 @@ int shutdown_main(int argc, char **argv) {
     // We should never get here because the system should reset
     __asm__ volatile ("hlt");
 
-    return 1;  // Return failure if we reached this point (which we shouldn't)
+    return 1;
 }
-
