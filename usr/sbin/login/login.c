@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <vers.h>
 
-// Add this definition (or put it in login.h)
 #define PASSWORD_MASK '*'
 
 static void clear_input_buffer(char* buffer, size_t size) {
