@@ -19,27 +19,37 @@ void vmm_init(void) {
 }
 
 void* vmm_alloc(size_t size) {
+    if (size == 0) return NULL;
+    
     size_t pages_needed = (size + VMM_PAGE_SIZE - 1) / VMM_PAGE_SIZE;
+    
+    if (pages_needed > VMM_MAX_PAGES) {
+        printf("vmm0: Error: Requested size too large\n");
+        return NULL;
+    }
 
     for (size_t i = 0; i <= VMM_MAX_PAGES - pages_needed; ++i) {
         bool block_free = true;
         for (size_t j = 0; j < pages_needed; ++j) {
             if (page_table[i + j].state != VMM_PAGE_FREE) {
                 block_free = false;
+                i += j; // Skip past this used page
                 break;
             }
         }
+        
         if (block_free) {
             for (size_t j = 0; j < pages_needed; ++j) {
                 page_table[i + j].state = VMM_PAGE_USED;
-                page_table[i + j].alloc_pages = 0;
+                page_table[i + j].alloc_pages = pages_needed;
+                page_table[i + j].tag = 0;
             }
-            page_table[i].alloc_pages = pages_needed;
             return (void*)page_table[i].base_addr;
         }
     }
 
-    return NULL; // No memory block large enough
+    printf("vmm0: Warning: No contiguous block of %zu pages available\n", pages_needed);
+    return NULL;
 }
 
 void* vmm_alloc_aligned(size_t size, size_t align) {
@@ -71,16 +81,25 @@ void* vmm_alloc_aligned(size_t size, size_t align) {
 }
 
 void vmm_free(void* addr) {
+    if (!addr) return;
+
     uintptr_t target = (uintptr_t)addr;
 
     for (size_t i = 0; i < VMM_MAX_PAGES; ++i) {
-        if (page_table[i].base_addr == target && page_table[i].state == VMM_PAGE_USED) {
-            size_t pages = page_table[i].alloc_pages;
-            if (pages == 0) {
-                printf("vmm0: Warning: Block at 0x%08x has no allocation size metadata!\n", (unsigned)target);
+        if (page_table[i].base_addr <= target && 
+            target < page_table[i].base_addr + page_table[i].alloc_pages * VMM_PAGE_SIZE) {
+            
+            if (page_table[i].state != VMM_PAGE_USED) {
+                printf("vmm0: Warning: Tried to free unallocated memory at 0x%08x\n", (unsigned)target);
                 return;
             }
+
+            size_t pages = page_table[i].alloc_pages;
             for (size_t j = 0; j < pages; ++j) {
+                if (i + j >= VMM_MAX_PAGES) {
+                    printf("vmm0: Error: Corrupted page table detected during free\n");
+                    return;
+                }
                 page_table[i + j].state = VMM_PAGE_FREE;
                 page_table[i + j].alloc_pages = 0;
                 page_table[i + j].tag = 0;
