@@ -10,7 +10,7 @@ The Makefile in this directory builds the whole system from the source tree.
 
 For information on the CPU architecture supported by Unics: i386.
 
-For official Unics bootable images, (COMING SOON).
+For official Unics bootable images, [get to RELEASE tab](https://github.com/0x16000/Unics/releases/tag/Open).
 
 ## Source Roadmap
 
