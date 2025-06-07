@@ -114,7 +114,7 @@ int main(void) {
     
     vga_puts("\n");
     vga_puts("Starting system services...\n");
-    delay(200000);
+    delay(150000);
     
     vga_puts("Starting init process\n");
     delay(100000);
