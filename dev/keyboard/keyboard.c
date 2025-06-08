@@ -34,6 +34,7 @@ static kb_state_t kb_state = {0};
 int kb_init(void) {
     // Initialize all state to false
     memset(&kb_state, 0, sizeof(kb_state));
+    kb_flush();
     
     // Set default LED state
     kb_state.caps_lock = false;
@@ -59,21 +60,78 @@ void kb_set_boot_complete(bool complete) {
 }
 
 void kb_set_leds(uint8_t led_state) {
-    // Wait for keyboard to be ready
-    while (inb(KB_STATUS_PORT) & 0x02);
-    outb(KB_DATA_PORT, 0xED);  // LED command
+    // Limit retries to prevent hanging
+    const uint8_t max_retries = 3;
+    uint8_t retries = 0;
     
-    while (inb(KB_STATUS_PORT) & 0x02);
-    outb(KB_DATA_PORT, led_state & 0x07);
-    
-    // Update our state
-    kb_state.caps_lock = (led_state & KB_LED_CAPS_LOCK) != 0;
-    kb_state.num_lock = (led_state & KB_LED_NUM_LOCK) != 0;
-    kb_state.scroll_lock = (led_state & KB_LED_SCROLL_LOCK) != 0;
+    // Mask to valid LED bits
+    led_state &= (KB_LED_SCROLL_LOCK | KB_LED_NUM_LOCK | KB_LED_CAPS_LOCK);
+
+    // Step 1: Send LED command
+    while (retries < max_retries) {
+        // Wait until input buffer is empty
+        while (retries < max_retries && (inb(KB_STATUS_PORT) & 0x02)) {
+            retries++;
+            asm volatile("pause"); // Small delay
+        }
+        
+        if (retries >= max_retries) break;
+        
+        // Send LED command
+        outb(KB_CMD_PORT, 0xED);
+        
+        // Wait for ACK (0xFA)
+        uint8_t ack_retries = 0;
+        while (ack_retries < max_retries) {
+            if (inb(KB_STATUS_PORT) & 0x01) {
+                if (inb(KB_DATA_PORT) == 0xFA) {
+                    break; // Got ACK
+                }
+            }
+            ack_retries++;
+            asm volatile("pause");
+        }
+        
+        if (ack_retries >= max_retries) {
+            retries++;
+            continue;
+        }
+        
+        // Step 2: Send LED state
+        while (retries < max_retries && (inb(KB_STATUS_PORT) & 0x02)) {
+            retries++;
+            asm volatile("pause");
+        }
+        
+        if (retries >= max_retries) break;
+        
+        outb(KB_DATA_PORT, led_state);
+        
+        // Wait for ACK (0xFA)
+        ack_retries = 0;
+        while (ack_retries < max_retries) {
+            if (inb(KB_STATUS_PORT) & 0x01) {
+                if (inb(KB_DATA_PORT) == 0xFA) {
+                    // Success - update our state
+                    kb_state.caps_lock = (led_state & KB_LED_CAPS_LOCK) != 0;
+                    kb_state.num_lock = (led_state & KB_LED_NUM_LOCK) != 0;
+                    kb_state.scroll_lock = (led_state & KB_LED_SCROLL_LOCK) != 0;
+                    return;
+                }
+            }
+            ack_retries++;
+            asm volatile("pause");
+        }
+        
+        retries++;
+    }
+
+    // If we get here, the command failed
 }
 
 static char scancode_to_ascii(uint8_t scancode) {
-    if ((uint16_t)scancode >= sizeof(kb_scancode_to_ascii)) return 0;
+    if (scancode >= sizeof(kb_scancode_to_ascii) / sizeof(kb_scancode_to_ascii[0])) 
+        return 0;
     
     bool shift = kb_state.shift_pressed;
     bool caps_lock = kb_state.caps_lock;
