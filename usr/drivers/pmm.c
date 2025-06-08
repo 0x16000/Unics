@@ -18,10 +18,19 @@ static inline bool test_bit(size_t index) {
     return (pmm_bitmap[index / 8] >> (index % 8)) & 1;
 }
 
-void pmm_init(void) {
+void pmm_init(uintptr_t reserved_start, uintptr_t reserved_end) {
     memset(pmm_bitmap, 0, sizeof(pmm_bitmap));
-    printf("pmm0: Initialized physical memory manager for %d pages (%u KB)\n", 
-           PMM_MAX_PAGES, (PMM_MAX_PAGES * PMM_PAGE_SIZE) / 1024);
+    
+    // Mark reserved memory as allocated
+    size_t start_page = (reserved_start - pmm_base_address) / PMM_PAGE_SIZE;
+    size_t end_page = (reserved_end - pmm_base_address + PMM_PAGE_SIZE - 1) / PMM_PAGE_SIZE;
+    
+    for (size_t i = start_page; i < end_page && i < PMM_MAX_PAGES; i++) {
+        set_bit(i);
+    }
+    
+    printf("pmm: Initialized for %u pages (%u MB)\n",
+           PMM_MAX_PAGES, (PMM_MAX_PAGES * PMM_PAGE_SIZE) / (1024 * 1024));
 }
 
 void* pmm_alloc_page(void) {
@@ -36,18 +45,23 @@ void* pmm_alloc_page(void) {
 
 void pmm_free_page(void* addr) {
     uintptr_t target = (uintptr_t)addr;
-
+    
     if (target < pmm_base_address) {
-        printf("[pmm] Warning: Attempt to free below base address: 0x%08x\n", (unsigned)target);
+        printf("[pmm] ERROR: Attempt to free invalid address 0x%08x (below base)\n", target);
         return;
     }
-
+    
     size_t index = (target - pmm_base_address) / PMM_PAGE_SIZE;
-    if (index >= PMM_MAX_PAGES || !test_bit(index)) {
-        printf("[pmm] Warning: Invalid or double free at 0x%08x\n", (unsigned)target);
+    if (index >= PMM_MAX_PAGES) {
+        printf("[pmm] ERROR: Address 0x%08x beyond managed memory\n", target);
         return;
     }
-
+    
+    if (!test_bit(index)) {
+        printf("[pmm] WARNING: Double-free or unallocated page at 0x%08x\n", target);
+        return;
+    }
+    
     clear_bit(index);
 }
 

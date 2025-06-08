@@ -95,7 +95,7 @@ int main(void) {
     delay(100000);
 
     // Initialize physical memory manager
-    pmm_init();
+    pmm_init(0x00000000, 0x00100000);  // Reserve memory below 1MB
     vga_puts("pmm: Physical memory initialized\n");
     delay(50000);
 
