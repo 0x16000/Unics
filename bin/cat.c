@@ -12,29 +12,36 @@ int cat_main(int argc, char *argv[]) {
 
     const char *filename = argv[1];
 
+    // Open the file (no file handle returned in your API)
     int rc = fs_open(&root_fs, filename);
     if (rc != 0) {
-        printf("Error opening file: %s\n", filename);
+        printf("Error opening file %s (code: %d)\n", filename, rc);
         return 1;
     }
 
     char buffer[BUFFER_SIZE];
     ssize_t bytes_read;
+    int retval = 0;
 
+    // Read the file in chunks
     while ((bytes_read = fs_read(&root_fs, filename, buffer, BUFFER_SIZE)) > 0) {
+        // Output the read data
         for (ssize_t i = 0; i < bytes_read; i++) {
             putchar(buffer[i]);
         }
     }
 
     if (bytes_read < 0) {
-        printf("Error reading file: %s\n", filename);
+        printf("Error reading file %s (code: %zd)\n", filename, bytes_read);
+        retval = 1;
     }
 
+    // Close the file
     rc = fs_close(&root_fs, filename);
     if (rc != 0) {
-        printf("Error closing file: %s\n", filename);
+        printf("Error closing file %s (code: %d)\n", filename, rc);
+        retval = 1;
     }
 
-    return bytes_read < 0 ? 1 : 0;
+    return retval;
 }

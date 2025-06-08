@@ -1,23 +1,35 @@
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 
 int cowsay_main(int argc, char **argv) {
-    // If no arguments, show usage
     if (argc == 1) {
         printf("Usage: cowsay [message]\n");
         return 0;
     }
 
-    // Calculate message length
-    int length = 0;
+    // Use size_t instead of int for length
+    size_t length = 0;
     for (int i = 1; i < argc; i++) {
-        length += strlen(argv[i]);
-        if (i < argc - 1) length++; // for space
+        size_t arg_len = strlen(argv[i]);
+        if (length > SIZE_MAX - arg_len) {  // Check for overflow
+            fprintf(stderr, "Error: message too long\n");
+            return 1;
+        }
+        length += arg_len;
+        if (i < argc - 1) {
+            if (length == SIZE_MAX) {  // No space left for the extra space
+                fprintf(stderr, "Error: message too long\n");
+                return 1;
+            }
+            length++; // for space
+        }
     }
 
+    // Rest of the code remains the same...
     // Print top border
     printf(" ");
-    for (int i = 0; i < length + 2; i++) printf("_");
+    for (size_t i = 0; i < length + 2; i++) printf("_");
     printf("\n");
 
     // Print message
@@ -30,7 +42,7 @@ int cowsay_main(int argc, char **argv) {
 
     // Print bottom border
     printf(" ");
-    for (int i = 0; i < length + 2; i++) printf("-");
+    for (size_t i = 0; i < length + 2; i++) printf("-");
     printf("\n");
 
     // Print the cow

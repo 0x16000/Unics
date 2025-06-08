@@ -21,18 +21,28 @@ int pwd_main(int argc, char *argv[]) {
         dir = dir->parent;
     }
 
-    // Print from root down to current_dir
-    for (ssize_t i = depth - 1; i >= 0; i--) {
+    // Handle potential overflow
+    if (dir != NULL && depth == max_depth) {
+        printf("pwd: path too deep\n");
+        return 1;
+    }
+
+    // Always start with root
+    printf("/");
+
+    // Print from root down to current_dir (skip root itself at stack[depth-1])
+    for (ssize_t i = depth - 2; i >= 0; i--) {
         // Skip empty names to avoid extra slashes
         if (stack[i]->name[0] == '\0') {
             continue;
         }
-        printf("%s", stack[i]->name);
-        if (i > 0) {
-            printf("");
-        }
+        printf("%s/", stack[i]->name);
     }
 
+    // Remove trailing slash if not root
+    if (depth > 1) {
+        printf("\b \b"); // Backspace to remove last slash
+    }
     printf("\n");
     return 0;
 }

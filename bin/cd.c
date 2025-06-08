@@ -3,6 +3,7 @@
 #include <string.h>
 
 extern File *current_dir;
+extern FileSystem root_fs;
 char cwd[PATH_MAX] = "/";
 
 static void update_cwd() {
@@ -29,6 +30,7 @@ static void update_cwd() {
     }
 
     strncpy(cwd, temp, PATH_MAX);
+    cwd[PATH_MAX - 1] = '\0';  // Ensure null-termination
 }
 
 int cd_main(int argc, char *argv[]) {
@@ -39,10 +41,15 @@ int cd_main(int argc, char *argv[]) {
 
     const char *target = argv[1];
 
+    // Handle special cases
     if (strcmp(target, "/") == 0) {
-        current_dir = NULL;
+        current_dir = NULL;  // Using NULL for root as per your original code
         update_cwd();
         return 0;
+    }
+
+    if (strcmp(target, ".") == 0) {
+        return 0;  // no change needed
     }
 
     if (strcmp(target, "..") == 0) {
@@ -55,14 +62,18 @@ int cd_main(int argc, char *argv[]) {
         return 0;
     }
 
-    // Search for directory under current_dir (or root)
+    // Search for directory in the filesystem
+    // This assumes files are stored in root_fs.files array
     for (size_t i = 0; i < root_fs.file_count; i++) {
         File *f = &root_fs.files[i];
-        if (f->is_dir && strcmp(f->name, target) == 0 &&
-            ((current_dir == NULL && f->parent == NULL) || (f->parent == current_dir))) {
-            current_dir = f;
-            update_cwd();
-            return 0;
+        if (f->is_dir && strcmp(f->name, target) == 0) {
+            // Check if it's in current directory (or root if current_dir is NULL)
+            if ((current_dir == NULL && f->parent == NULL) || 
+                (current_dir != NULL && f->parent == current_dir)) {
+                current_dir = f;
+                update_cwd();
+                return 0;
+            }
         }
     }
 
