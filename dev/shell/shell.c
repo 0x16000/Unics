@@ -4,6 +4,9 @@
 #include <vga.h>
 #include <limits.h>
 
+#define CMD_COL_WIDTH 18
+#define DESC_COL_WIDTH 45
+
 // External declarations
 extern shell_command_t shell_commands[];  // The shell commands array
 extern size_t shell_commands_count;        // The number of shell commands
@@ -21,19 +24,43 @@ int help_main(int argc, char **argv) {
     (void) argc;
     (void) argv;
 
-    vga_puts("+------------------+-------------------------------------------+\n");
-    vga_puts("| Command          | Description                               |\n");
-    vga_puts("+------------------+-------------------------------------------+\n");
+    // Top border
+    vga_puts("+");
+    for (int i = 0; i < CMD_COL_WIDTH; i++) vga_puts("-");
+    vga_puts("+");
+    for (int i = 0; i < DESC_COL_WIDTH; i++) vga_puts("-");
+    vga_puts("+\n");
 
+    // Header
+    vga_puts("| ");
+    print_padded("Command", CMD_COL_WIDTH - 2);
+    vga_puts(" | ");
+    print_padded("Description", DESC_COL_WIDTH - 2);
+    vga_puts(" |\n");
+
+    // Separator
+    vga_puts("+");
+    for (int i = 0; i < CMD_COL_WIDTH; i++) vga_puts("-");
+    vga_puts("+");
+    for (int i = 0; i < DESC_COL_WIDTH; i++) vga_puts("-");
+    vga_puts("+\n");
+
+    // Command entries
     for (size_t i = 0; i < shell_commands_count; i++) {
         vga_puts("| ");
-        print_padded(shell_commands[i].name, 16);      // Command column
+        print_padded(shell_commands[i].name, CMD_COL_WIDTH - 2);
         vga_puts(" | ");
-        print_padded(shell_commands[i].description, 41); // Description column
+        print_padded(shell_commands[i].description, DESC_COL_WIDTH - 2);
         vga_puts(" |\n");
     }
 
-    vga_puts("+------------------+-------------------------------------------+\n");
+    // Bottom border
+    vga_puts("+");
+    for (int i = 0; i < CMD_COL_WIDTH; i++) vga_puts("-");
+    vga_puts("+");
+    for (int i = 0; i < DESC_COL_WIDTH; i++) vga_puts("-");
+    vga_puts("+\n");
+
     return 0;
 }
 
