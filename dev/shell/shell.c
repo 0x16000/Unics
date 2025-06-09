@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <keyboard.h>
 #include <vga.h>
+#include <limits.h>
 
 // External declarations
 extern shell_command_t shell_commands[];  // The shell commands array
