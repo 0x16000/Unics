@@ -4,6 +4,9 @@
 
 Process process_table[MAX_PROCESSES];
 
+// Global PID counter to ensure unique PIDs
+static int next_pid = 100;
+
 void process_init(void) {
     for (int i = 0; i < MAX_PROCESSES; i++) {
         process_table[i].used = false;
@@ -11,9 +14,11 @@ void process_init(void) {
 }
 
 int process_create(const char *name, int ppid) {
+    if (!name) return -1;  // Null check
+    
     for (int i = 0; i < MAX_PROCESSES; i++) {
         if (!process_table[i].used) {
-            process_table[i].pid = i + 100;  // PID starts at 100
+            process_table[i].pid = next_pid++;  // Unique PID
             strncpy(process_table[i].name, name, MAX_PROCESS_NAME - 1);
             process_table[i].name[MAX_PROCESS_NAME - 1] = '\0';
             process_table[i].state = PROCESS_RUNNING;
@@ -22,17 +27,19 @@ int process_create(const char *name, int ppid) {
             return process_table[i].pid;
         }
     }
-    return -1;  // No space left
+    return -1;
 }
 
 int process_kill(int pid) {
     for (int i = 0; i < MAX_PROCESSES; i++) {
         if (process_table[i].used && process_table[i].pid == pid) {
+            // Clear all fields for clean state
+            memset(&process_table[i], 0, sizeof(Process));
             process_table[i].used = false;
-            return 0;  // Success
+            return 0;
         }
     }
-    return -1;  // Not found
+    return -1;
 }
 
 Process *process_get(int pid) {
