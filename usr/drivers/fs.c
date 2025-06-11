@@ -2,274 +2,494 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
-// The global filesystem instance
+// Global filesystem instance
 FileSystem root_fs;
 File *current_dir = NULL;
+
+static uint64_t fs_get_time(void) {
+    return (uint64_t)time(NULL);
+}
 
 void fs_init(void) {
     memset(&root_fs, 0, sizeof(FileSystem));
     root_fs.file_count = 0;
+    root_fs.next_inode = 1;
+    
+    // Initialize free list
+    for (size_t i = 0; i < MAX_FILES; i++) {
+        root_fs.free_list[i] = true;
+    }
 
     // Create root directory
-    File *root_dir = &root_fs.files[root_fs.file_count++];
+    File *root_dir = &root_fs.files[0];
+    root_fs.free_list[0] = false;
+    
     strcpy(root_dir->name, "/");
     root_dir->is_dir = true;
     root_dir->parent = NULL;
     root_dir->data = NULL;
     root_dir->size = 0;
+    root_dir->allocated_size = 0;
     root_dir->is_open = false;
     root_dir->position = 0;
+    root_dir->permissions = FS_PERM_READ | FS_PERM_WRITE | FS_PERM_EXEC;
+    root_dir->inode = root_fs.next_inode++;
+    root_dir->created_time = fs_get_time();
+    root_dir->modified_time = root_dir->created_time;
 
+    root_fs.file_count = 1;
     current_dir = root_dir;
 }
 
-int fs_create(const char *filename) {
-    // Check if filesystem is full
-    if (root_fs.file_count >= MAX_FILES) {
-        return -1; // Too many files
+int fs_validate_filename(const char *filename) {
+    if (!filename || strlen(filename) == 0) {
+        return FS_ERR_INVALID_PATH;
     }
-
-    // Check filename length
+    
     if (strlen(filename) >= MAX_FILENAME_LEN) {
-        return -2; // Filename too long
+        return FS_ERR_NAME_TOO_LONG;
+    }
+    
+    // Check for invalid characters
+    for (const char *p = filename; *p; p++) {
+        if (!fs_is_valid_path_char(*p)) {
+            return FS_ERR_INVALID_PATH;
+        }
+    }
+    
+    // Reject . and .. as regular filenames (they're special)
+    if (strcmp(filename, ".") == 0 || strcmp(filename, "..") == 0) {
+        return FS_ERR_INVALID_PATH;
+    }
+    
+    return FS_SUCCESS;
+}
+
+bool fs_is_valid_path_char(char c) {
+    // Allow alphanumeric, dash, underscore, and dot
+    return (c >= 'a' && c <= 'z') || 
+           (c >= 'A' && c <= 'Z') || 
+           (c >= '0' && c <= '9') || 
+           c == '-' || c == '_' || c == '.';
+}
+
+File* fs_find_file_in_dir(const char *filename, File *dir) {
+    if (!filename || !dir) return NULL;
+    
+    for (size_t i = 0; i < root_fs.file_count; i++) {
+        if (!root_fs.free_list[i] && 
+            root_fs.files[i].parent == dir && 
+            strcmp(root_fs.files[i].name, filename) == 0) {
+            return &root_fs.files[i];
+        }
+    }
+    return NULL;
+}
+
+File* fs_find_file(const char *filename) {
+    return fs_find_file_in_dir(filename, current_dir);
+}
+
+int fs_resize_file(File *file, size_t new_size) {
+    if (!file || file->is_dir) return FS_ERR_INVALID_PATH;
+    
+    if (new_size > MAX_FILE_SIZE) {
+        new_size = MAX_FILE_SIZE;
+    }
+    
+    if (new_size > file->allocated_size) {
+        // Need to grow the file
+        size_t new_allocated = ((new_size + FS_BLOCK_SIZE - 1) / FS_BLOCK_SIZE) * FS_BLOCK_SIZE;
+        uint8_t *new_data = realloc(file->data, new_allocated);
+        if (!new_data) {
+            return FS_ERR_NO_MEMORY;
+        }
+        file->data = new_data;
+        file->allocated_size = new_allocated;
+    }
+    
+    file->size = new_size;
+    file->modified_time = fs_get_time();
+    return FS_SUCCESS;
+}
+
+int fs_create_with_perms(const char *filename, uint8_t permissions) {
+    int validation_result = fs_validate_filename(filename);
+    if (validation_result != FS_SUCCESS) {
+        return validation_result;
     }
 
     // Check if file already exists
-    for (size_t i = 0; i < root_fs.file_count; i++) {
-        if (strcmp(root_fs.files[i].name, filename) == 0 && 
-            root_fs.files[i].parent == current_dir) {
-            return -3; // File already exists
-        }
+    if (fs_find_file(filename) != NULL) {
+        return FS_ERR_EXISTS;
     }
 
-    // Ensure current_dir still exists (could have been deleted)
-    bool parent_exists = false;
-    for (size_t i = 0; i < root_fs.file_count; i++) {
-        if (&root_fs.files[i] == current_dir) {
-            parent_exists = true;
+    // Find free slot
+    size_t free_slot = MAX_FILES;
+    for (size_t i = 0; i < MAX_FILES; i++) {
+        if (root_fs.free_list[i]) {
+            free_slot = i;
             break;
         }
     }
-    if (!parent_exists) {
-        return -4; // Parent directory no longer exists
+    
+    if (free_slot == MAX_FILES) {
+        return FS_ERR_FULL;
     }
 
     // Allocate new file
-    File *new_file = &root_fs.files[root_fs.file_count];
+    File *new_file = &root_fs.files[free_slot];
+    root_fs.free_list[free_slot] = false;
     
-    // Copy filename (ensuring null-termination)
+    // Initialize file
     strncpy(new_file->name, filename, MAX_FILENAME_LEN - 1);
     new_file->name[MAX_FILENAME_LEN - 1] = '\0';
 
-    // Allocate data (if not a directory)
-    new_file->data = malloc(MAX_FILE_SIZE);
+    // Allocate initial data block
+    new_file->allocated_size = FS_BLOCK_SIZE;
+    new_file->data = malloc(new_file->allocated_size);
     if (!new_file->data) {
-        return -5; // Memory allocation failed
+        root_fs.free_list[free_slot] = true;
+        return FS_ERR_NO_MEMORY;
     }
 
-    // Initialize file metadata
+    // Initialize metadata
     new_file->size = 0;
     new_file->is_open = false;
     new_file->is_dir = false;
     new_file->parent = current_dir;
     new_file->position = 0;
+    new_file->permissions = permissions;
+    new_file->inode = root_fs.next_inode++;
+    new_file->created_time = fs_get_time();
+    new_file->modified_time = new_file->created_time;
 
     root_fs.file_count++;
-    return 0; // Success
+    return FS_SUCCESS;
+}
+
+int fs_create(const char *filename) {
+    return fs_create_with_perms(filename, FS_PERM_DEFAULT);
 }
 
 int fs_delete(const char *filename) {
-    for (size_t i = 0; i < root_fs.file_count; i++) {
-        if (strcmp(root_fs.files[i].name, filename) == 0) {
-            File *file = &root_fs.files[i];
+    File *file = fs_find_file(filename);
+    if (!file) {
+        return FS_ERR_NOT_FOUND;
+    }
 
-            // Check if file is open
-            if (file->is_open) {
-                return -1; // File is open
+    if (file->is_open) {
+        return FS_ERR_FILE_OPEN;
+    }
+
+    // Check if it's root directory
+    if (file == &root_fs.files[0]) {
+        return FS_ERR_INVALID_PATH;
+    }
+
+    // Handle directories
+    if (file->is_dir) {
+        // Check if directory is empty
+        for (size_t i = 0; i < MAX_FILES; i++) {
+            if (!root_fs.free_list[i] && root_fs.files[i].parent == file) {
+                return FS_ERR_NOT_EMPTY;
             }
-
-            // Handle directories
-            if (file->is_dir) {
-                // Check if directory is empty
-                for (size_t j = 0; j < root_fs.file_count; j++) {
-                    if (root_fs.files[j].parent == file) {
-                        return -3; // Directory not empty
-                    }
-                }
-            } else {
-                // Free file data (only if not a directory)
-                if (file->data) {
-                    free(file->data);
-                    file->data = NULL;
-                }
-            }
-
-            // Shift remaining files down
-            for (size_t j = i; j < root_fs.file_count - 1; j++) {
-                root_fs.files[j] = root_fs.files[j + 1];
-            }
-            root_fs.file_count--;
-
-            return 0; // Success
+        }
+        
+        // If we're deleting current directory, move to parent
+        if (current_dir == file) {
+            current_dir = file->parent;
+        }
+    } else {
+        // Free file data
+        if (file->data) {
+            free(file->data);
+            file->data = NULL;
         }
     }
-    return -2; // File not found
+
+    // Mark slot as free
+    size_t file_index = file - root_fs.files;
+    root_fs.free_list[file_index] = true;
+    memset(file, 0, sizeof(File));
+    root_fs.file_count--;
+
+    return FS_SUCCESS;
 }
 
 int fs_open(FileSystem *fs, const char *filename) {
-    for (size_t i = 0; i < fs->file_count; i++) {
-        if (strcmp(fs->files[i].name, filename) == 0) {
-            if (fs->files[i].is_open) {
-                return -1; // File already open
-            }
-            
-            fs->files[i].is_open = true;
-            fs->files[i].position = 0;
-            return 0; // Success
-        }
+    (void)fs; // Unused parameter for API compatibility
+    File *file = fs_find_file(filename);
+    if (!file) {
+        return FS_ERR_NOT_FOUND;
+    }
+
+    if (file->is_open) {
+        return FS_ERR_FILE_OPEN;
     }
     
-    return -2; // File not found
+    if (file->is_dir) {
+        return FS_ERR_INVALID_PATH;
+    }
+
+    file->is_open = true;
+    file->position = 0;
+    return FS_SUCCESS;
 }
 
 int fs_close(FileSystem *fs, const char *filename) {
-    for (size_t i = 0; i < fs->file_count; i++) {
-        if (strcmp(fs->files[i].name, filename) == 0) {
-            if (!fs->files[i].is_open) {
-                return -1; // File not open
-            }
-            
-            fs->files[i].is_open = false;
-            return 0; // Success
-        }
+    (void)fs; // Unused parameter for API compatibility
+    File *file = fs_find_file(filename);
+    if (!file) {
+        return FS_ERR_NOT_FOUND;
     }
-    
-    return -2; // File not found
+
+    if (!file->is_open) {
+        return FS_ERR_NOT_OPEN;
+    }
+
+    file->is_open = false;
+    return FS_SUCCESS;
 }
 
 size_t fs_read(FileSystem *fs, const char *filename, void *buffer, size_t size) {
-    for (size_t i = 0; i < fs->file_count; i++) {
-        if (strcmp(fs->files[i].name, filename) == 0) {
-            if (!fs->files[i].is_open) {
-                return 0; // File not open
-            }
-            
-            size_t bytes_available = fs->files[i].size - fs->files[i].position;
-            size_t bytes_to_read = size < bytes_available ? size : bytes_available;
-            
-            memcpy(buffer, fs->files[i].data + fs->files[i].position, bytes_to_read);
-            fs->files[i].position += bytes_to_read;
-            
-            return bytes_to_read;
-        }
+    (void)fs; // Unused parameter for API compatibility
+    if (!buffer || size == 0) return 0;
+    
+    File *file = fs_find_file(filename);
+    if (!file || !file->is_open || file->is_dir) {
+        return 0;
     }
     
-    return 0; // File not found
+    if (!(file->permissions & FS_PERM_READ)) {
+        return 0;
+    }
+    
+    size_t bytes_available = file->size > file->position ? 
+                            file->size - file->position : 0;
+    size_t bytes_to_read = size < bytes_available ? size : bytes_available;
+    
+    if (bytes_to_read > 0) {
+        memcpy(buffer, file->data + file->position, bytes_to_read);
+        file->position += bytes_to_read;
+    }
+    
+    return bytes_to_read;
 }
 
 size_t fs_write(FileSystem *fs, const char *filename, const void *buffer, size_t size) {
-    for (size_t i = 0; i < fs->file_count; i++) {
-        if (strcmp(fs->files[i].name, filename) == 0) {
-            if (!fs->files[i].is_open) {
-                return 0; // File not open
-            }
-            
-            size_t space_available = MAX_FILE_SIZE - fs->files[i].position;
-            size_t bytes_to_write = size < space_available ? size : space_available;
-            
-            memcpy(fs->files[i].data + fs->files[i].position, buffer, bytes_to_write);
-            fs->files[i].position += bytes_to_write;
-            
-            // Update file size if we wrote past the previous end
-            if (fs->files[i].position > fs->files[i].size) {
-                fs->files[i].size = fs->files[i].position;
-            }
-            
-            return bytes_to_write;
+    (void)fs; // Unused parameter for API compatibility
+    if (!buffer || size == 0) return 0;
+    
+    File *file = fs_find_file(filename);
+    if (!file || !file->is_open || file->is_dir) {
+        return 0;
+    }
+    
+    if (!(file->permissions & FS_PERM_WRITE)) {
+        return 0;
+    }
+    
+    // Check if we need to resize the file
+    size_t required_size = file->position + size;
+    if (required_size > file->size) {
+        if (fs_resize_file(file, required_size) != FS_SUCCESS) {
+            // Resize failed, write what we can
+            size_t space_available = file->allocated_size > file->position ? 
+                                   file->allocated_size - file->position : 0;
+            size = size < space_available ? size : space_available;
+            if (size == 0) return 0;
         }
     }
     
-    return 0; // File not found
+    memcpy(file->data + file->position, buffer, size);
+    file->position += size;
+    
+    if (file->position > file->size) {
+        file->size = file->position;
+    }
+    
+    file->modified_time = fs_get_time();
+    return size;
 }
 
 int fs_seek(FileSystem *fs, const char *filename, size_t offset) {
-    for (size_t i = 0; i < fs->file_count; i++) {
-        if (strcmp(fs->files[i].name, filename) == 0) {
-            if (!fs->files[i].is_open) {
-                return -1; // File not open
-            }
-            
-            if (offset > fs->files[i].size) {
-                return -2; // Offset beyond file size
-            }
-            
-            fs->files[i].position = offset;
-            return 0; // Success
-        }
+    (void)fs; // Unused parameter for API compatibility
+    File *file = fs_find_file(filename);
+    if (!file) {
+        return FS_ERR_NOT_FOUND;
     }
     
-    return -3; // File not found
+    if (!file->is_open) {
+        return FS_ERR_NOT_OPEN;
+    }
+    
+    if (offset > file->size) {
+        return FS_ERR_SEEK_BOUNDS;
+    }
+    
+    file->position = offset;
+    return FS_SUCCESS;
 }
 
-void fs_list(FileSystem *fs) {
-    for (size_t i = 0; i < fs->file_count; i++) {
-        File *f = &fs->files[i];
-        if (f->parent == current_dir) {  // Only list files/dirs in current directory
-            const char *type = f->is_dir ? "DIR " : "FILE";
-            const char *status = f->is_open ? "open" : "closed";
-            printf("[%s] %s (%s) - %zu bytes\n", status, f->name, type, f->size);
-        }
+size_t fs_tell(FileSystem *fs, const char *filename) {
+    (void)fs; // Unused parameter for API compatibility
+    File *file = fs_find_file(filename);
+    if (!file || !file->is_open) {
+        return 0;
     }
+    return file->position;
 }
 
 int fs_mkdir(const char *dirname) {
-    if (root_fs.file_count >= MAX_FILES) {
-        return -1; // Too many files/directories
-    }
-
-    if (strlen(dirname) >= MAX_FILENAME_LEN) {
-        return -2; // Name too long
+    int validation_result = fs_validate_filename(dirname);
+    if (validation_result != FS_SUCCESS) {
+        return validation_result;
     }
 
     // Check if directory already exists
-    for (size_t i = 0; i < root_fs.file_count; i++) {
-        if (strcmp(root_fs.files[i].name, dirname) == 0) {
-            return -3; // Already exists
+    if (fs_find_file(dirname) != NULL) {
+        return FS_ERR_EXISTS;
+    }
+
+    // Find free slot
+    size_t free_slot = MAX_FILES;
+    for (size_t i = 0; i < MAX_FILES; i++) {
+        if (root_fs.free_list[i]) {
+            free_slot = i;
+            break;
         }
+    }
+    
+    if (free_slot == MAX_FILES) {
+        return FS_ERR_FULL;
     }
 
     // Create new directory
-    File *new_file = &root_fs.files[root_fs.file_count];
-    strncpy(new_file->name, dirname, MAX_FILENAME_LEN);
-    new_file->is_dir = true;
-    new_file->data = NULL; // Directories don't have data
-    new_file->size = 0;
-    new_file->is_open = false;
-    new_file->position = 0;
-    new_file->parent = current_dir;
+    File *new_dir = &root_fs.files[free_slot];
+    root_fs.free_list[free_slot] = false;
+    
+    strncpy(new_dir->name, dirname, MAX_FILENAME_LEN - 1);
+    new_dir->name[MAX_FILENAME_LEN - 1] = '\0';
+    new_dir->is_dir = true;
+    new_dir->data = NULL;
+    new_dir->size = 0;
+    new_dir->allocated_size = 0;
+    new_dir->is_open = false;
+    new_dir->position = 0;
+    new_dir->parent = current_dir;
+    new_dir->permissions = FS_PERM_READ | FS_PERM_WRITE | FS_PERM_EXEC;
+    new_dir->inode = root_fs.next_inode++;
+    new_dir->created_time = fs_get_time();
+    new_dir->modified_time = new_dir->created_time;
 
     root_fs.file_count++;
-    return 0; // Success
+    return FS_SUCCESS;
 }
 
 int fs_chdir(const char *dirname) {
     if (strcmp(dirname, "..") == 0) {
         if (current_dir->parent != NULL) {
             current_dir = current_dir->parent;
-            return 0; // success
+            return FS_SUCCESS;
         }
-        // Already at root
-        return -2;
+        return FS_ERR_INVALID_PATH; // Already at root
     }
 
-    for (size_t i = 0; i < root_fs.file_count; i++) {
+    File *target_dir = fs_find_file(dirname);
+    if (!target_dir) {
+        return FS_ERR_NOT_FOUND;
+    }
+    
+    if (!target_dir->is_dir) {
+        return FS_ERR_INVALID_PATH;
+    }
+
+    current_dir = target_dir;
+    return FS_SUCCESS;
+}
+
+char* fs_getcwd(char *buffer, size_t size) {
+    if (!buffer || size == 0) return NULL;
+    
+    // Build path by walking up the tree
+    char temp_path[PATH_MAX];
+    temp_path[0] = '\0';
+    
+    File *dir = current_dir;
+    while (dir != NULL) {
+        if (dir->parent == NULL) {
+            // Root directory
+            if (strlen(temp_path) == 0) {
+                strcpy(temp_path, "/");
+            }
+            break;
+        } else {
+            // Prepend directory name
+            char new_path[PATH_MAX];
+            snprintf(new_path, sizeof(new_path), "/%s%s", dir->name, temp_path);
+            strcpy(temp_path, new_path);
+            dir = dir->parent;
+        }
+    }
+    
+    if (strlen(temp_path) >= size) {
+        return NULL; // Buffer too small
+    }
+    
+    strcpy(buffer, temp_path);
+    return buffer;
+}
+
+void fs_list(FileSystem *fs) {
+    (void)fs; // Unused parameter for API compatibility
+    printf("Directory listing for: ");
+    char cwd[PATH_MAX];
+    if (fs_getcwd(cwd, sizeof(cwd))) {
+        printf("%s\n", cwd);
+    } else {
+        printf("(unknown)\n");
+    }
+    
+    printf("%-20s %-8s %-8s %-10s %s\n", "Name", "Type", "Size", "Perms", "Modified");
+    printf("%-20s %-8s %-8s %-10s %s\n", "----", "----", "----", "-----", "--------");
+    
+    for (size_t i = 0; i < MAX_FILES; i++) {
+        if (root_fs.free_list[i]) continue;
+        
         File *f = &root_fs.files[i];
-        if (f->parent == current_dir && strcmp(f->name, dirname) == 0 && f->is_dir) {
-            current_dir = f;
-            return 0;
+        if (f->parent == current_dir) {
+            const char *type = f->is_dir ? "DIR" : "FILE";
+            char perms[4] = "---";
+            if (f->permissions & FS_PERM_READ) perms[0] = 'r';
+            if (f->permissions & FS_PERM_WRITE) perms[1] = 'w';
+            if (f->permissions & FS_PERM_EXEC) perms[2] = 'x';
+            
+            printf("%-20s %-8s %-8zu %-10s %lu\n", 
+                   f->name, type, f->size, perms, (unsigned long)f->modified_time);
         }
     }
+}
 
-    return -1; // Directory not found
+void fs_print_stats(void) {
+    size_t used_files = 0;
+    size_t total_data_size = 0;
+    size_t total_allocated = 0;
+    
+    for (size_t i = 0; i < MAX_FILES; i++) {
+        if (!root_fs.free_list[i]) {
+            used_files++;
+            File *f = &root_fs.files[i];
+            total_data_size += f->size;
+            total_allocated += f->allocated_size;
+        }
+    }
+    
+    printf("Filesystem Statistics:\n");
+    printf("  Files/Directories: %zu / %d\n", used_files, MAX_FILES);
+    printf("  Data Size: %zu bytes\n", total_data_size);
+    printf("  Allocated: %zu bytes\n", total_allocated);
+    printf("  Next Inode: %u\n", root_fs.next_inode);
 }
