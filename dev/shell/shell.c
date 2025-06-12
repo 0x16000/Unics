@@ -23,49 +23,114 @@ void print_padded(const char *text, int width) {
     }
 }
 
-// Enhanced help command with better formatting
 int help_main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    vga_puts("Available commands:\n\n");
+    // Paging configuration
+    const size_t COMMANDS_PER_PAGE = 10;
+    size_t current_page = 0;
+    size_t total_pages = (shell_commands_count + COMMANDS_PER_PAGE - 1) / COMMANDS_PER_PAGE;
+    bool show_paging = shell_commands_count > COMMANDS_PER_PAGE;
 
-    // Top border
-    vga_putchar('+');
-    for (int i = 0; i < CMD_COL_WIDTH; i++) vga_putchar('-');
-    vga_putchar('+');
-    for (int i = 0; i < DESC_COL_WIDTH; i++) vga_putchar('-');
-    vga_puts("+\n");
+    while (true) {
+        vga_puts("Available commands:\n\n");
 
-    // Header
-    vga_puts("| ");
-    print_padded("Command", CMD_COL_WIDTH - 2);
-    vga_puts(" | ");
-    print_padded("Description", DESC_COL_WIDTH - 2);
-    vga_puts(" |\n");
+        // Top border
+        vga_putchar('+');
+        for (int i = 0; i < CMD_COL_WIDTH; i++) vga_putchar('-');
+        vga_putchar('+');
+        for (int i = 0; i < DESC_COL_WIDTH; i++) vga_putchar('-');
+        vga_puts("+\n");
 
-    // Separator
-    vga_putchar('+');
-    for (int i = 0; i < CMD_COL_WIDTH; i++) vga_putchar('-');
-    vga_putchar('+');
-    for (int i = 0; i < DESC_COL_WIDTH; i++) vga_putchar('-');
-    vga_puts("+\n");
-
-    // Command entries
-    for (size_t i = 0; i < shell_commands_count; i++) {
+        // Header
         vga_puts("| ");
-        print_padded(shell_commands[i].name, CMD_COL_WIDTH - 2);
+        print_padded("Command", CMD_COL_WIDTH - 2);
         vga_puts(" | ");
-        print_padded(shell_commands[i].description, DESC_COL_WIDTH - 2);
+        print_padded("Description", DESC_COL_WIDTH - 2);
         vga_puts(" |\n");
+
+        // Separator
+        vga_putchar('+');
+        for (int i = 0; i < CMD_COL_WIDTH; i++) vga_putchar('-');
+        vga_putchar('+');
+        for (int i = 0; i < DESC_COL_WIDTH; i++) vga_putchar('-');
+        vga_puts("+\n");
+
+        // Command entries for current page
+        size_t start_idx = current_page * COMMANDS_PER_PAGE;
+        size_t end_idx = start_idx + COMMANDS_PER_PAGE;
+        if (end_idx > shell_commands_count) end_idx = shell_commands_count;
+
+        for (size_t i = start_idx; i < end_idx; i++) {
+            vga_puts("| ");
+            print_padded(shell_commands[i].name, CMD_COL_WIDTH - 2);
+            vga_puts(" | ");
+            print_padded(shell_commands[i].description, DESC_COL_WIDTH - 2);
+            vga_puts(" |\n");
+        }
+
+        // Bottom border
+        vga_putchar('+');
+        for (int i = 0; i < CMD_COL_WIDTH; i++) vga_putchar('-');
+        vga_putchar('+');
+        for (int i = 0; i < DESC_COL_WIDTH; i++) vga_putchar('-');
+        vga_puts("+\n");
+
+        // Page navigation info
+        if (show_paging) {
+            vga_puts("\nPage ");
+            // Simple number printing without snprintf
+            size_t page_num = current_page + 1;
+            if (page_num >= 10) vga_putchar('0' + (page_num / 10));
+            vga_putchar('0' + (page_num % 10));
+            vga_puts("/");
+            if (total_pages >= 10) vga_putchar('0' + (total_pages / 10));
+            vga_putchar('0' + (total_pages % 10));
+            vga_puts(" - [N]ext, [P]revious, [Q]uit\n");
+        } else {
+            vga_puts("\nPress any key to continue...\n");
+        }
+
+        // Get user input for navigation
+        char input = kb_getchar();
+        vga_putchar('\n'); // Move to new line after input
+
+        if (!show_paging) {
+            break; // Exit after one page if no paging needed
+        }
+
+        // Simple lowercase conversion without tolower()
+        if (input >= 'A' && input <= 'Z') {
+            input += ('a' - 'A');
+        }
+
+        switch (input) {
+            case 'n': // Next page
+                if (current_page < total_pages - 1) {
+                    current_page++;
+                } else {
+                    vga_puts("Already on last page.\n");
+                }
+                break;
+            case 'p': // Previous page
+                if (current_page > 0) {
+                    current_page--;
+                } else {
+                    vga_puts("Already on first page.\n");
+                }
+                break;
+            case 'q': // Quit
+                return 0;
+            default:
+                vga_puts("Invalid option. Use N/P/Q for navigation.\n");
+                break;
+        }
+
+        // Clear screen for next page
+        vga_puts("\n");
     }
 
-    // Bottom border
-    vga_putchar('+');
-    for (int i = 0; i < CMD_COL_WIDTH; i++) vga_putchar('-');
-    vga_putchar('+');
-    for (int i = 0; i < DESC_COL_WIDTH; i++) vga_putchar('-');
-    vga_puts("+\n");
     return 0;
 }
 
