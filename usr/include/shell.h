@@ -93,5 +93,6 @@ extern int mkdir_main(int argc, char **argv);
 extern int cd_main(int argc, char **argv);
 extern int rmdir_main(int argc, char **argv);
 extern int pwd_main(int argc, char **argv);
+extern int sleep_main(int argc, char **argv);
 
 #endif // SHELL_H

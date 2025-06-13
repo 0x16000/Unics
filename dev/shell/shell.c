@@ -224,6 +224,7 @@ shell_command_t shell_commands[] = {
     { "pwd",      "Show the current working directory",        pwd_main      },
     { "rand",     "Generate a random number",                  rand_main     },
     { "reboot",   "Reboot the system",                         reboot_main   },
+    { "sleep",    "Pause execution for specified seconds",      sleep_main   },
     { "rm",       "Remove a file",                             rm_main       },
     { "rmdir",    "Remove an empty directory",                 rmdir_main    },
     { "shutdown", "Shut down the system",                      shutdown_main },
