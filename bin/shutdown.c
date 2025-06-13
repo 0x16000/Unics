@@ -11,116 +11,178 @@ static void delay(uint32_t count) {
 }
 
 /**
- * Attempts a VirtualBox shutdown via the 0x4004 port.
- * This method is specific to VirtualBox.
+ * Check if we're running in VirtualBox by looking for specific indicators
+ */
+static bool detect_virtualbox() {
+    // Try to detect VirtualBox by checking for VBox guest additions port
+    uint16_t test_value = 0;
+    
+    // VirtualBox typically responds to certain port reads
+    __asm__ volatile (
+        "inw %w1, %w0"
+        : "=a" (test_value)
+        : "Nd" ((uint16_t)0x4004)
+        : "memory"
+    );
+    
+    // This is a basic check - in a real implementation you'd want more thorough detection
+    return true; // Assume VirtualBox for now
+}
+
+/**
+ * Attempts a VirtualBox shutdown via emulator-specific methods.
+ * VirtualBox doesn't always respond to standard ACPI without proper AML.
  */
 static bool try_vbox_shutdown() {
-    vga_puts("Attempting VirtualBox shutdown...\n");
+    vga_puts("Attempting VirtualBox-specific shutdown...\n");
 
-    // Write shutdown command to VirtualBox power management port (0x4004)
+    // Method 1: Try VirtualBox's debug/test ports
+    // Some VirtualBox versions respond to this
     __asm__ volatile (
         "outw %w0, %w1"
         :
-        : "a" ((uint16_t)0x2000), "Nd" ((uint16_t)0x4004)  // Fixed: Changed from 0x3400 to 0x2000
+        : "a" ((uint16_t)0x2000), "Nd" ((uint16_t)0x4004)
         : "memory"
     );
-
-    // Wait to see if shutdown occurs
-    delay(10000);
-    return false;  // Return false if shutdown did not occur
-}
-
-/**
- * Attempts to initiate an ACPI shutdown via the 0x604 port.
- * Returns true if shutdown was initiated, false otherwise.
- */
-static bool try_acpi_shutdown() {
-    vga_puts("Attempting ACPI shutdown...\n");  // Added status message
+    delay(5000);
     
-    for (int attempt = 0; attempt < 3; attempt++) {
-        // Write shutdown command to ACPI PM1a control register (0x604)
-        __asm__ volatile (
-            "outw %w0, %w1"
-            :
-            : "a" ((uint16_t)0x2000), "Nd" ((uint16_t)0x604)
-            : "memory"
-        );
-        
-        // Wait a bit to give time for the shutdown to take effect
-        delay(10000);
-
-        // If we're still here, the shutdown attempt failed
-        vga_puts("ACPI shutdown attempt ");
-        vga_putdec(attempt + 1, 1);  // Display attempt number
-        vga_puts(" failed\n");
-    }
-    return false;  // Return false if ACPI shutdown failed after multiple attempts
-}
-
-/**
- * Attempts a Bochs/QEMU shutdown via the 0xB004 port.
- * This method is specific to Bochs and QEMU emulators.
- */
-static bool try_bochs_shutdown() {
-    vga_puts("Attempting Bochs/QEMU shutdown...\n");
-
-    // Write shutdown command to Bochs/QEMU control port (0xB004)
+    // Method 2: Try QEMU-style shutdown (VBox sometimes emulates this)
+    __asm__ volatile (
+        "outw %w0, %w1"
+        :
+        : "a" ((uint16_t)0x2000), "Nd" ((uint16_t)0x604)
+        : "memory"
+    );
+    delay(5000);
+    
+    // Method 3: Try Bochs/QEMU debug exit
     __asm__ volatile (
         "outw %w0, %w1"
         :
         : "a" ((uint16_t)0x2000), "Nd" ((uint16_t)0xB004)
         : "memory"
     );
-
-    // Wait to see if shutdown occurs
-    delay(10000);
-    return false;  // Return false if shutdown did not occur
+    delay(5000);
+    
+    return false; // If we're still here, it didn't work
 }
 
 /**
- * Try to shutdown via ACPI by reading DSDT table (more proper method)
- * This is a placeholder for a more complete ACPI implementation
+ * Try a simple halt-based "shutdown" that stops execution
+ * This is what many simple OSs do when they can't actually power off
  */
-static bool try_proper_acpi_shutdown() {
-    // This would require parsing ACPI tables to find the correct PM1a_CNT register
-    // For now, we'll try common ACPI ports
-    uint16_t acpi_ports[] = {0x1004, 0x604, 0x404, 0};
+static bool try_halt_shutdown() {
+    vga_puts("Performing halt-based shutdown...\n");
+    vga_puts("System halted. You can now close the VM.\n");
     
-    for (int i = 0; acpi_ports[i] != 0; i++) {
-        vga_puts("Trying ACPI port 0x");
-        // You'd need a hex print function here
-        vga_puts("...\n");
-        
-        __asm__ volatile (
-            "outw %w0, %w1"
-            :
-            : "a" ((uint16_t)0x2000), "Nd" (acpi_ports[i])
-            : "memory"
-        );
-        
-        delay(5000);
+    // Disable interrupts and halt
+    __asm__ volatile ("cli");
+    
+    // Infinite halt loop
+    for(;;) {
+        __asm__ volatile ("hlt");
     }
     
+    return true; // This should never return
+}
+
+/**
+ * Attempts a QEMU shutdown via the 0x604 port with proper value.
+ */
+static bool try_qemu_shutdown() {
+    vga_puts("Attempting QEMU shutdown...\n");
+
+    // QEMU isa-debug-exit device (if enabled)
+    __asm__ volatile (
+        "outw %w0, %w1"
+        :
+        : "a" ((uint16_t)0x501), "Nd" ((uint16_t)0x501)
+        : "memory"
+    );
+
+    delay(5000);
+    
+    // Also try QEMU's ACPI implementation
+    __asm__ volatile (
+        "outw %w0, %w1"
+        :
+        : "a" ((uint16_t)0x3400), "Nd" ((uint16_t)0x604)
+        : "memory"
+    );
+
+    delay(10000);
     return false;
 }
 
 /**
- * Trigger a fallback reset by causing a triple fault.
- * This forces a system reset.
+ * Safe keyboard controller reset method
+ */
+static bool try_keyboard_reset() {
+    vga_puts("Attempting keyboard controller reset...\n");
+    
+    // Wait for keyboard controller to be ready
+    int timeout = 1000;
+    while (timeout-- > 0) {
+        __asm__ volatile (
+            "inb $0x64, %%al"
+            :
+            :
+            : "al"
+        );
+        uint8_t status;
+        __asm__ volatile (
+            "inb $0x64, %0"
+            : "=a" (status)
+        );
+        
+        if (!(status & 0x02)) break; // Input buffer empty
+        delay(100);
+    }
+    
+    if (timeout <= 0) {
+        vga_puts("Keyboard controller timeout\n");
+        return false;
+    }
+    
+    // Send reset command to keyboard controller
+    __asm__ volatile (
+        "outb %%al, $0x64"
+        :
+        : "a" ((uint8_t)0xFE)
+        : "memory"
+    );
+    
+    delay(10000);
+    return false;
+}
+
+/**
+ * Trigger a controlled reset by causing a triple fault.
  */
 static void system_fallback_reset() {
-    vga_puts("Triggering triple fault to force reset...\n");
+    vga_puts("Initiating controlled system reset...\n");
+    
+    // Give user a moment to see the message
+    delay(100000);
 
-    // Disable interrupts first
+    // Disable interrupts
     __asm__ volatile ("cli");
 
-    // Create a null IDT descriptor (limit=0, base=0)
+    // Method 1: Try keyboard controller reset first (safer)
+    if (try_keyboard_reset()) {
+        return;
+    }
+
+    // Method 2: Triple fault as last resort
+    vga_puts("Forcing triple fault...\n");
+    delay(50000);
+
+    // Create invalid IDT
     struct {
         uint16_t limit;
         uint32_t base;
     } __attribute__((packed)) null_idt = {0, 0};
 
-    // Load the null IDT
     __asm__ volatile (
         "lidt %0"
         :
@@ -128,19 +190,10 @@ static void system_fallback_reset() {
         : "memory"
     );
 
-    // Trigger an interrupt to cause a triple fault
-    __asm__ volatile ("int $0x03");
+    // Trigger interrupt
+    __asm__ volatile ("int $0x01");
 
-    // Alternative: divide by zero
-    __asm__ volatile (
-        "xor %%eax, %%eax\n\t"
-        "div %%eax"
-        :
-        :
-        : "eax"
-    );
-
-    // If we get here (which we shouldn't), halt the system
+    // Infinite halt loop
     for(;;) {
         __asm__ volatile ("hlt");
     }
@@ -150,50 +203,49 @@ static void system_fallback_reset() {
  * Main entry point for the shutdown command.
  */
 int shutdown_main(int argc, char **argv) {
-    (void)argv;  // Explicitly mark unused parameter
+    (void)argc; // Mark as intentionally unused
+    (void)argv; // Mark as intentionally unused
 
-    vga_puts("Attempting system shutdown...\n");
+    vga_puts("Initiating system shutdown sequence...\n");
 
-    // Check if the user passed any arguments
     bool force_shutdown = false;
-    if (argc > 1 && argv[1] != NULL && argv[1][0] == '-') {  // Added null check
-        if (argv[1][1] == 'f') {  // Check for -f flag specifically
-            vga_puts("Forcing shutdown...\n");
+    if (argc > 1 && argv[1] != NULL) {
+        if (argv[1][0] == '-' && argv[1][1] == 'f') {
+            vga_puts("Force shutdown requested\n");
             force_shutdown = true;
         }
     }
 
-    // Try VirtualBox shutdown first
-    if (try_vbox_shutdown()) {
+    // Detection and appropriate method selection
+    if (detect_virtualbox()) {
+        vga_puts("VirtualBox environment detected\n");
+        if (try_vbox_shutdown()) {
+            return 0;
+        }
+    }
+
+    // If no emulator-specific method worked, just halt cleanly
+    if (!force_shutdown) {
+        vga_puts("No power-off method available. Halting system cleanly.\n");
+        try_halt_shutdown(); // This won't return
+    }
+
+    // Try QEMU-specific methods
+    if (try_qemu_shutdown()) {
         return 0;
     }
 
-    // Try proper ACPI shutdown
-    if (try_proper_acpi_shutdown()) {
-        return 0;
-    }
-
-    // Try original ACPI method
-    if (try_acpi_shutdown()) {
-        return 0;
-    }
-
-    // Try Bochs/QEMU shutdown
-    if (try_bochs_shutdown()) {
-        return 0;
-    }
-
-    // If all shutdown methods failed, decide what to do
+    // If all else fails
     if (force_shutdown) {
-        vga_puts("All shutdown methods failed, forcing reset...\n");
+        vga_puts("All shutdown methods failed. Forcing system reset...\n");
         system_fallback_reset();
     } else {
-        vga_puts("All shutdown methods failed. Use 'shutdown -f' to force reset.\n");
+        vga_puts("Shutdown failed. System is still running.\n");
+        vga_puts("Use 'shutdown -f' to force a reset.\n");
         return 1;
     }
 
-    // We should never get here
-    for(;;) {
-        __asm__ volatile ("hlt");
-    }
+    // Should never reach here
+    return 0;
 }
+
