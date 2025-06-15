@@ -217,6 +217,7 @@ shell_command_t shell_commands[] = {
     { "expr",     "Evaluate an arithmetic expression",         expr_main     },
     { "factor",   "Show the prime factors of a number",        factor_main   },
     { "fetch",    "Display system information",                fetch_main    },
+    { "figlet",   "Transform normal text into ASCII art",      figlet_main   },
     { "help",     "Show this help message",                    help_main     },
     { "history",  "Show command history",                      history_main  },
     { "ls",       "List files in the current directory",       ls_main       },
