@@ -108,6 +108,7 @@ int help_main(int argc, char **argv) {
         switch (input) {
             case 'n': // Next page
                 if (current_page < total_pages - 1) {
+                    vga_clear();
                     current_page++;
                 } else {
                     vga_puts("Already on last page.\n");
@@ -115,6 +116,7 @@ int help_main(int argc, char **argv) {
                 break;
             case 'p': // Previous page
                 if (current_page > 0) {
+                    vga_clear();
                     current_page--;
                 } else {
                     vga_puts("Already on first page.\n");
