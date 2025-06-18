@@ -99,7 +99,7 @@ int main(void) {
 
     // Add memory regions (adjust based on your system's memory layout)
     pmm_add_region(0x00100000, 0x07F00000, PMM_ZONE_NORMAL); // 1MB-128MB normal memory
-pmm_add_region(0x00100000, 0x00F00000, PMM_ZONE_DMA);    // 1MB-16MB DMA zone
+    pmm_add_region(0x00100000, 0x00F00000, PMM_ZONE_DMA);    // 1MB-16MB DMA zone
 
     // Reserve low memory (0-1MB) and kernel area
     pmm_reserve_range(0x00000000, 0x00100000); // Reserve 0-1MB
