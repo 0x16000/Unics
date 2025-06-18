@@ -21,6 +21,24 @@ FILE *stdin_file = &stdin_file_struct;
 FILE *stdout_file = &stdout_file_struct;
 FILE *stderr_file = &stderr_file_struct;
 
+#define INPUT_BUFFER_SIZE 256
+static char input_buffer[INPUT_BUFFER_SIZE];
+static int input_buffer_pos = 0;
+static int input_buffer_len = 0;
+static int input_buffer_valid = 0;
+
+__hidden void __reverse_string(char *str, int length) {
+    int start = 0;
+    int end = length - 1;
+    while (start < end) {
+        char temp = str[start];
+        str[start] = str[end];
+        str[end] = temp;
+        start++;
+        end--;
+    }
+}
+
 /* Character classification functions - moved to ctype.h */
 __hidden int __isdigit(int c) {
     return (c >= '0' && c <= '9');
@@ -88,7 +106,47 @@ int getchar(void) {
         unget_char = EOF;
         return c;
     }
-    return kb_getchar();
+    
+    /* Check if we have buffered input */
+    if (input_buffer_valid && input_buffer_pos < input_buffer_len) {
+        return input_buffer[input_buffer_pos++];
+    }
+    
+    /* Read new line if buffer is empty */
+    if (!input_buffer_valid || input_buffer_pos >= input_buffer_len) {
+        input_buffer_pos = 0;
+        input_buffer_len = 0;
+        input_buffer_valid = 0;
+        
+        int c;
+        while ((c = kb_getchar()) != '\n' && c != EOF && input_buffer_len < INPUT_BUFFER_SIZE - 1) {
+            if (c == '\b' || c == 127) { /* Backspace */
+                if (input_buffer_len > 0) {
+                    input_buffer_len--;
+                    vga_putchar('\b');
+                    vga_putchar(' ');
+                    vga_putchar('\b');
+                }
+            } else if (c >= 32 && c <= 126) { /* Printable characters */
+                input_buffer[input_buffer_len++] = c;
+                vga_putchar(c);
+            }
+        }
+        
+        if (c == '\n') {
+            input_buffer[input_buffer_len++] = '\n';
+            vga_putchar('\n');
+        }
+        
+        input_buffer[input_buffer_len] = '\0';
+        input_buffer_valid = 1;
+    }
+    
+    if (input_buffer_pos < input_buffer_len) {
+        return input_buffer[input_buffer_pos++];
+    }
+    
+    return EOF;
 }
 
 int ungetc(int c, int fd) {
@@ -473,7 +531,46 @@ int vprintf(const char *format, va_list args) {
                     break;
                 }
 
-                
+                case 'o': {
+    unsigned int num = va_arg(args, unsigned int);
+    itoa(num, str, 8);
+    if (alternate && num != 0) {
+        char temp[65] = "0";
+        strcat(temp, str);
+        strcpy(str, temp);
+    }
+    __output_with_format(str, width, precision, left_align, zero_pad);
+    chars_written += width > (int)__strlen(str) ? width : (int)__strlen(str);
+    break;
+}
+
+            case 'f':
+            case 'F': {
+                double num = va_arg(args, double);
+                /* Simple fixed-point approximation */
+                int whole = (int)num;
+                int frac = (int)((num - whole) * 1000000);
+                if (frac < 0) frac = -frac;
+    
+                char whole_str[32], frac_str[32];
+                itoa(whole, whole_str, 10);
+            itoa(frac, frac_str, 10);
+    
+                /* Pad fractional part with leading zeros */
+                int frac_len = __strlen(frac_str);
+            while (frac_len < 6) {
+                    for (int i = frac_len; i >= 0; i--) {
+                        frac_str[i + 1] = frac_str[i];
+                    }
+                    frac_str[0] = '0';
+                    frac_len++;
+                }
+    
+                   sprintf(str, "%s.%s", whole_str, frac_str);
+                   __output_with_format(str, width, precision, left_align, zero_pad);
+                       chars_written += width > (int)__strlen(str) ? width : (int)__strlen(str);
+                   break;
+                }
                 case 'c': {
                     char c = (char)va_arg(args, int);
                     if (width > 1) {
@@ -489,7 +586,7 @@ int vprintf(const char *format, va_list args) {
                         vga_putchar(c);
                         chars_written++;
                     }
-                    break;
+                   break;
                 }
                 
                 case 'u': {
