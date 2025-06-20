@@ -1,0 +1,35 @@
+.\" Manpage for NULL driver - section 9 (Kernel Developer Manual)
+.TH NULL 9 "June 2025" "Unics Kernel Developer Manual" "Null Device Driver"
+.SH NAME
+null \- null device driver providing /dev/null functionality
+
+.SH SYNOPSIS
+The NULL driver creates and manages the special device file \fB/dev/null\fR.  
+This device discards all written data and returns EOF on reads.
+
+.SH DESCRIPTION
+The null device is a special file that acts as a data sink.  
+Any data written to it is discarded immediately, and reading from it returns end-of-file (EOF).  
+It is commonly used for discarding unwanted output or as a data source that provides no data.
+
+The NULL driver ensures \fB/dev/null\fR exists under the device filesystem, with standard read and write permissions.
+
+.SH FUNCTIONS
+.TP
+.B null_init(void)
+Initializes the null device driver by creating the \fB/dev/null\fR device file if it does not exist.
+
+.SH IMPLEMENTATION DETAILS
+Upon initialization, the driver checks for the presence of the \fBdev\fR directory and creates it if absent.  
+It then creates the \fBnull\fR file inside \fB/dev\fR with read and write permissions.  
+This file acts as the null device, consistent with Unix-like systems.
+
+.SH ERROR HANDLING
+If the \fBdev\fR directory or \fBnull\fR device file cannot be created due to filesystem errors, the driver will fail silently or log errors depending on the kernel's debug configuration.
+
+.SH AUTHOR
+0x16000
+
+.SH SEE ALSO
+null(4), fs(5), vmm(9)
+
