@@ -32,6 +32,10 @@ Just run the file:
 ```bash
 ./dependencies.pl
 ```
+Or:
+```bash
+perl dependencies.pl
+```
 
 ## Compile kernel
 Compiling is straight-forward.
