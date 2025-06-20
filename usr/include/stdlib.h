@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+extern void* _sbrk(intptr_t incr);
+
 // Exit codes
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1

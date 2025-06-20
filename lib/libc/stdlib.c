@@ -18,7 +18,7 @@ extern void* _sbrk(intptr_t increment);  // System call to extend heap
 extern char end;        // Provided by linker script
 static char* heap_end = &end;
 
-void* _sbrk(ptrdiff_t incr) {
+void* _sbrk(intptr_t incr) {
     char* prev_heap_end = heap_end;
     heap_end += incr;
     return (void*) prev_heap_end;
