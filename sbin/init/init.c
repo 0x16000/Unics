@@ -13,6 +13,7 @@
 #include <vmm.h>
 #include <pmm.h>
 #include <sha2.h>
+#include <paging.h>
 
 extern shell_command_t shell_commands[];
 extern size_t shell_commands_count;
@@ -49,6 +50,11 @@ int main(void) {
     delay(50000);
     
     vga_puts("\n");
+
+    // Initialize paging
+    paging_init();
+    vga_puts("Paging: initalization\n\n");
+    delay(50000);
     
     // Device probing messages
     vga_puts("Probing devices:\n");
