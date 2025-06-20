@@ -1,0 +1,77 @@
+.\" Manpage for VMM driver - section 9 (Kernel Developer Manual)
+.TH VMM 9 "June 2025" "Unics Kernel Developer Manual" "Virtual Memory Manager"
+.SH NAME
+vmm \- virtual memory manager for page allocation and management
+.SH SYNOPSIS
+The VMM subsystem manages physical page frames via a fixed-size page table.  
+It supports page allocation, deallocation, reservation, tagging, and statistics reporting.
+
+.SH DESCRIPTION
+The virtual memory manager maintains a page table describing each page's state: free, used, or reserved.  
+Pages have fixed size (VMM_PAGE_SIZE) and are allocated in contiguous blocks.  
+Kernel and user pages are tracked separately with tags and flags.
+
+.SH FUNCTIONS
+.TP
+.B vmm_init(void)
+Initializes the page table and marks all pages free except reserved kernel ranges.
+
+.TP
+.B vmm_reserve_range(uintptr_t start, uintptr_t end)
+Marks a physical address range as reserved to prevent allocation.
+
+.TP
+.B vmm_alloc(size_t size)
+Allocates a block of pages to cover the requested byte size.
+
+.TP
+.B vmm_alloc_aligned(size_t size, size_t align)
+Allocates pages aligned to a power-of-two boundary.
+
+.TP
+.B vmm_alloc_tagged(size_t size, uint32_t tag, bool is_kernel)
+Allocates pages with a tag and kernel/user ownership flag.
+
+.TP
+.B vmm_free(void *addr)
+Frees previously allocated pages starting at the given address.
+
+.TP
+.B vmm_dump_state(void)
+Prints current page allocation layout and statistics.
+
+.TP
+.B vmm_stats(size_t *used_kb, size_t *free_kb, size_t *reserved_kb)
+Retrieves usage statistics in kilobytes.
+
+.TP
+.B vmm_get_total_memory(void)
+Returns total managed memory size in bytes.
+
+.TP
+.B vmm_get_largest_free_block(void)
+Returns size of the largest contiguous free block in bytes.
+
+.TP
+.B vmm_set_tag(void *addr, uint32_t tag)
+Assigns a tag to the page containing the address.
+
+.TP
+.B vmm_get_tag(void *addr)
+Returns the tag for the page containing the address.
+
+.SH IMPLEMENTATION DETAILS
+Page allocation is done by scanning for contiguous free pages in the page table.  
+Alignment constraints and tagging support efficient memory management and debugging.  
+The page table uses simple arrays and flags for fast lookup and modification.  
+The system uses assertions and debug prints to detect misuse and corruption.
+
+.SH ERROR HANDLING
+Allocation functions return NULL on failure (e.g., out of memory).  
+Freeing unallocated or invalid pages prints warnings and aborts silently.
+
+.SH AUTHOR
+0x16000
+
+.SH SEE ALSO
+malloc(3), free(3), paging(9)

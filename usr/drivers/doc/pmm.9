@@ -1,0 +1,97 @@
+.TH PMM 9 "June 2025" "Unics Kernel Developer Manual" "Physical Memory Manager"
+.SH NAME
+pmm \- physical memory management subsystem of Unics kernel
+.SH SYNOPSIS
+The PMM subsystem provides allocation, reservation, and tracking of physical memory pages.  
+It supports multiple memory regions and zones, each managed via bitmaps.
+.SH DESCRIPTION
+The physical memory manager (PMM) is responsible for managing the physical RAM available to the kernel.  
+Memory is divided into regions, each described by a \fCpmm_region_t\fP structure containing:
+
+.IP
+- Base physical address
+.IP
+- Number of pages
+.IP
+- Bitmap indicating allocated/free pages
+.IP
+- Zone type (DMA, NORMAL, HIGHMEM)
+.IP
+- Allocation hints for efficiency
+
+.PP
+Memory is managed at page granularity (\fCPMM_PAGE_SIZE\fP).  
+Allocation uses bitmap scanning to find free pages or contiguous blocks.  
+Regions are maintained in a linked list \fCpmm_regions\fP.
+
+.SH FUNCTIONS
+.TP
+.B pmm_init(void)
+Initializes the PMM subsystem. Must be called once at kernel startup.
+
+.TP
+.B pmm_add_region(uintptr_t base, size_t size, pmm_zone_t zone)
+Adds a physical memory region to be managed by the PMM.
+
+.TP
+.B pmm_reserve_range(uintptr_t start, uintptr_t end)
+Marks a range of physical addresses as reserved/unavailable.
+
+.TP
+.B pmm_alloc_page(void)
+Allocates a single free physical page from the NORMAL zone.
+
+.TP
+.B pmm_alloc_page_zone(pmm_zone_t zone)
+Allocates a single free page from the specified zone.
+
+.TP
+.B pmm_alloc_pages(size_t count)
+Allocates multiple contiguous pages from the NORMAL zone.
+
+.TP
+.B pmm_alloc_pages_zone(size_t count, pmm_zone_t zone)
+Allocates multiple contiguous pages from the specified zone.
+
+.TP
+.B pmm_free_page(void *addr)
+Frees a previously allocated page.
+
+.TP
+.B pmm_free_pages(void *addr, size_t count)
+Frees multiple contiguous pages.
+
+.TP
+.B pmm_is_page_allocated(void *addr)
+Checks if a given page address is allocated.
+
+.TP
+.B pmm_get_stats(void)
+Returns memory usage statistics.
+
+.TP
+.B pmm_dump_state(void)
+Prints detailed memory regions and allocation status.
+
+.TP
+.B pmm_dump_stats(void)
+Prints a summary of physical memory usage.
+
+.SH IMPLEMENTATION DETAILS
+The PMM uses 64-bit bitmaps to track page allocation status efficiently.  
+Fast bit scanning is implemented via software CLZ (count-leading-zeros) to find free pages.  
+Allocation tries to find free pages starting from the last allocation hint to reduce fragmentation.
+
+Pages are aligned to \fCPMM_PAGE_SIZE\fP boundaries.  
+The system supports multiple zones for specialized memory usage, aiding device DMA and high-memory management.
+
+.SH ERROR HANDLING
+Functions return \fC0\fP on success and \fC-1\fP on failure.  
+Errors include uninitialized PMM, invalid addresses, double-free detection, and out-of-memory conditions.
+
+.SH AUTHOR
+0x16000
+
+.SH SEE ALSO
+vm(9), cpu(9), malloc(9)
+

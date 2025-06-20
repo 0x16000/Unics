@@ -1,0 +1,50 @@
+.TH SHA256 3 "June 2025" "Unics Library" "SHA-256 Hashing Functions"
+.SH NAME
+sha256 \- Secure Hash Algorithm 256-bit (SHA-256) implementation
+.SH SYNOPSIS
+#include <sha2.h>
+.br
+void sha256_init(sha256_ctx *ctx);
+.br
+void sha256_update(sha256_ctx *ctx, const uint8_t *data, size_t len);
+.br
+void sha256_final(sha256_ctx *ctx, uint8_t *digest);
+.br
+void sha256(const uint8_t *data, size_t len, uint8_t *digest);
+.SH DESCRIPTION
+The SHA-256 functions provide a complete implementation of the SHA-256 cryptographic hash algorithm as specified by FIPS 180-4.
+
+.TP
+.B sha256_init()
+Initializes the SHA-256 context \fCctx\fP before starting a new hash computation.
+
+.TP
+.B sha256_update()
+Feeds input data to the ongoing SHA-256 calculation. Can be called multiple times with chunks of data.
+
+.TP
+.B sha256_final()
+Completes the hash calculation and writes the 32-byte (256-bit) digest output.
+
+.TP
+.B sha256()
+Convenience function that computes the SHA-256 digest of the entire input buffer \fCdata\fP of length \fClen\fP in one call.
+
+.SH USAGE
+Typical usage pattern:
+.nf
+    sha256_ctx ctx;
+    uint8_t digest[32];
+    sha256_init(&ctx);
+    sha256_update(&ctx, input_data, input_len);
+    sha256_final(&ctx, digest);
+.fi
+Or use the single-call interface:
+.nf
+    sha256(input_data, input_len, digest);
+.fi
+
+.SH SEE ALSO
+sha1(3), md5(3)
+.SH AUTHOR
+0x16000

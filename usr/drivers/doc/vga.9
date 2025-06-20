@@ -1,0 +1,92 @@
+.\" Manpage for VGA driver - section 9 (Kernel Developer Manual)
+.TH VGA 9 "June 2025" "Unics Kernel Developer Manual" "VGA Text Mode Driver"
+.SH NAME
+vga \- text mode VGA driver for console output and cursor control
+.SH SYNOPSIS
+The VGA driver provides basic text-mode output on VGA-compatible hardware.  
+It manages character display, cursor position, colors, and screen scrolling.
+
+.SH DESCRIPTION
+The VGA driver writes characters directly to the VGA text buffer at physical address 0xB8000.  
+It supports:
+.IP
+- Character and string output with control characters (newline, tab, backspace)
+.IP
+- Hardware cursor control and positioning
+.IP
+- Foreground/background color and text attribute management
+.IP
+- Screen clearing, scrolling, and area manipulation
+.IP
+- Optional double-buffering to reduce flicker
+.IP
+- Drawing boxes and filling screen areas with characters
+.SH FUNCTIONS
+.TP
+.B vga_initialize(void)
+Initializes VGA text mode, clears the screen, and enables the hardware cursor.
+
+.TP
+.B vga_shutdown(void)
+Disables the cursor and deactivates the driver.
+
+.TP
+.B vga_clear(void)
+Clears the entire screen using the current color attribute.
+
+.TP
+.B vga_putchar(char c)
+Outputs a single character, handling special control characters properly.
+
+.TP
+.B vga_puts(const char *str)
+Outputs a null-terminated string to the screen.
+
+.TP
+.B vga_printf(const char *format, ...)
+Minimal printf-like function supporting %d, %x, %s, %c, and %% specifiers.
+
+.TP
+.B vga_set_color(vga_color_t fg, vga_color_t bg)
+Sets the text foreground and background colors for subsequent output.
+
+.TP
+.B vga_update_cursor(int x, int y)
+Moves the hardware cursor to the specified screen coordinates.
+
+.TP
+.B vga_enable_cursor(void)
+Enables the visible hardware text cursor.
+
+.TP
+.B vga_disable_cursor(void)
+Disables the hardware text cursor.
+
+.TP
+.B vga_scroll_up(int lines)
+Scrolls the screen content up by the specified number of lines.
+
+.TP
+.B vga_scroll_down(int lines)
+Scrolls the screen content down by the specified number of lines.
+
+.TP
+.B vga_draw_box(int x, int y, int width, int height, uint8_t color)
+Draws a simple ASCII box at the specified position and color.
+
+.SH IMPLEMENTATION DETAILS
+The VGA text buffer is a linear array of 16-bit entries, each encoding a character and color attribute.  
+Cursor position is managed by writing to VGA controller ports 0x3D4/0x3D5.  
+Scrolling is performed by moving blocks of memory within the buffer.  
+Double buffering uses a separate memory area to reduce flickering during updates.
+
+.SH ERROR HANDLING
+Most functions safely ignore calls if the VGA driver is not initialized or if parameters are out of valid bounds.  
+Invalid input characters are ignored or replaced by spaces.
+
+.SH AUTHOR
+0x16000
+
+.SH SEE ALSO
+io(9), printf(3), outb(2)
+

@@ -1,0 +1,50 @@
+.TH PANIC 9 "June 2025" "Unics Kernel Developer Manual" "Kernel Panic Handler"
+.SH NAME
+panic \- Unics kernel panic handler and system halt routine
+.SH SYNOPSIS
+#include <sys/panic.h>
+.sp
+void panic(const char *message, const char *file, uint32_t line);
+.br
+void panic_halt(void);
+.SH DESCRIPTION
+The \fCpanic()\fP function handles fatal kernel errors by displaying a full-screen panic message and halting the CPU to prevent further damage or undefined behavior.  
+It prints the provided error message, source file, and line number where the panic was triggered.  
+The panic screen uses VGA text mode with a distinct red background and white/yellow text for clear visibility.
+
+The \fCpanic_halt()\fP function disables interrupts and enters an infinite halt loop, effectively stopping all CPU activity.
+.SH DETAILS
+The panic screen layout includes:
+.IP
+- A centered "KERNEL PANIC" header with yellow text on red background.
+.IP
+- The error message prefixed by "ERROR:".
+.IP
+- The file and line number indicating the panic origin.
+.IP
+- A visual divider line.
+.IP
+- A notice "System halted. No safe recovery possible."
+
+This ensures a clear indication of a fatal error state, useful for debugging kernel crashes.
+.SH IMPLEMENTATION
+The panic screen uses VGA hardware text mode through the \fCvga\fP module, setting colors with:
+.IP
+- Foreground: white text on red background for error messages.
+.IP
+- Header: yellow text on red background.
+
+After printing the panic information, interrupts are disabled with the \fCcli\fP assembly instruction, and the CPU is halted in an infinite loop using the \fChlt\fP instruction.
+.SH USAGE
+Call \fCpanic()\fP from anywhere in kernel code when an unrecoverable error is detected:
+.RS
+.nf
+    panic("Out of memory", __FILE__, __LINE__);
+.fi
+.RE
+This will immediately display the panic screen and halt.
+.SH AUTHOR
+0x16000
+.SH SEE ALSO
+vga(9), cpu(9), halt(9)
+

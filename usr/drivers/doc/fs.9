@@ -1,0 +1,94 @@
+.TH FS 9 "June 2025" "Unics Kernel Developer Manual" "Filesystem Subsystem"
+.SH NAME
+fs \- Unics Kernel Filesystem Implementation and APIs
+.SH SYNOPSIS
+The filesystem subsystem provides basic file and directory management within the Unics kernel.  
+It manages file metadata, data storage, directories, permissions, and supports typical operations like create, delete, open, read, write, and seek.
+.SH DESCRIPTION
+The filesystem is implemented in \fCfs.c\fP and provides the following core abstractions:
+
+.TP
+.B FileSystem
+The global root filesystem instance tracking all files and directories.
+.TP
+.B File
+Represents files and directories with metadata fields such as name, size, permissions, timestamps, and pointers to data buffers.
+.TP
+.B Current Directory
+Tracked by a global pointer \fCcurrent_dir\fP.
+.SH FILE OPERATIONS
+Key functions and their purpose:
+
+.TP
+.B fs_init()
+Initializes the root filesystem, root directory, and internal data structures.
+.TP
+.B fs_create(const char *filename)
+Creates a new file in the current directory.
+.TP
+.B fs_delete(const char *filename)
+Deletes a file or directory (if empty).
+.TP
+.B fs_open(FileSystem *fs, const char *filename)
+Marks a file as open, enabling read/write operations.
+.TP
+.B fs_close(FileSystem *fs, const char *filename)
+Closes an open file.
+.TP
+.B fs_read(FileSystem *fs, const char *filename, void *buffer, size_t size)
+Reads data from an open file into a buffer.
+.TP
+.B fs_write(FileSystem *fs, const char *filename, const void *buffer, size_t size)
+Writes data to an open file.
+.TP
+.B fs_seek(FileSystem *fs, const char *filename, size_t offset)
+Sets the read/write position within a file.
+.TP
+.B fs_mkdir(const char *dirname)
+Creates a new directory in the current directory.
+.TP
+.B fs_chdir(const char *dirname)
+Changes the current working directory.
+.TP
+.B fs_getcwd(char *buffer, size_t size)
+Returns the absolute path of the current working directory.
+.SH ERRORS
+Common error codes returned by filesystem functions:
+
+.TP
+.B FS_ERR_INVALID_PATH
+The specified filename or directory path is invalid.
+.TP
+.B FS_ERR_NOT_FOUND
+File or directory was not found.
+.TP
+.B FS_ERR_EXISTS
+File or directory already exists.
+.TP
+.B FS_ERR_FULL
+Filesystem has no free space.
+.TP
+.B FS_ERR_FILE_OPEN
+File is already open.
+.TP
+.B FS_ERR_NOT_OPEN
+File is not open.
+.TP
+.B FS_ERR_NOT_EMPTY
+Attempt to delete a non-empty directory.
+.TP
+.B FS_ERR_NO_MEMORY
+Memory allocation failed.
+.TP
+.B FS_ERR_SEEK_BOUNDS
+Seek offset is out of file bounds.
+.SH IMPLEMENTATION DETAILS
+The filesystem stores files in a fixed-size array \fCroot_fs.files\fP with a maximum of \fCMAX_FILES\fP entries.  
+Files and directories track their parents for hierarchical navigation.  
+File data is stored in dynamically allocated blocks of size \fCFS_BLOCK_SIZE\fP.  
+Permissions use flags \fCFS_PERM_READ\fP, \fCFS_PERM_WRITE\fP, and \fCFS_PERM_EXEC\fP.
+.SH SEE ALSO
+open(2), read(2), write(2), mkdir(2), cd(1), ls(1)
+.SH AUTHOR
+0x16000
+

@@ -1,0 +1,72 @@
+.TH SYSCALL 9 "June 2025" "Unics Kernel Developer Manual" "System Call Interface"
+.SH NAME
+syscall \- low-level system call interface for Unics i386 kernel
+.SH SYNOPSIS
+#include <sys/syscall.h>
+.br
+int32_t syscall(int32_t number, int32_t arg1, int32_t arg2, int32_t arg3, int32_t arg4, int32_t arg5);
+.br
+int32_t sys_exit(int status);
+.br
+int32_t sys_read(int fd, void *buf, uint32_t count);
+.br
+int32_t sys_write(int fd, const void *buf, uint32_t count);
+.br
+int32_t sys_open(const char *pathname, int flags, int mode);
+.br
+int32_t sys_close(int fd);
+.br
+int32_t sys_lseek(int fd, int32_t offset, int whence);
+.br
+int32_t sys_getpid(void);
+.SH DESCRIPTION
+This module provides a generic system call function \fCsyscall()\fP that invokes the kernel using the i386 \fCint $0x80\fP instruction.
+
+System call arguments are passed via registers as follows:
+.IP
+- \fEAX\fP: system call number
+.IP
+- \fEBX\fP: first argument
+.IP
+- \fECX\fP: second argument
+.IP
+- \fEDX\fP: third argument
+.IP
+- \fESI\fP: fourth argument
+.IP
+- \fEDI\fP: fifth argument
+
+The wrapper functions provide convenient interfaces for frequently used syscalls.
+
+.SH FUNCTIONS
+.TP
+.B sys_exit(int status)
+Terminates the calling process with the specified exit status.
+.TP
+.B sys_read(int fd, void *buf, uint32_t count)
+Reads up to \fCcount\fP bytes from file descriptor \fCfd\fP into buffer \fCbuf\fP.
+.TP
+.B sys_write(int fd, const void *buf, uint32_t count)
+Writes up to \fCcount\fP bytes from buffer \fCbuf\fP to file descriptor \fCfd\fP.
+.TP
+.B sys_open(const char *pathname, int flags, int mode)
+Opens the file specified by \fCpathname\fP with given flags and mode.
+.TP
+.B sys_close(int fd)
+Closes the file descriptor \fCfd\fP.
+.TP
+.B sys_lseek(int fd, int32_t offset, int whence)
+Repositions the file offset of the open file descriptor \fCfd\fP.
+.TP
+.B sys_getpid(void)
+Returns the process ID of the calling process.
+
+.SH NOTES
+The \fCsyscall()\fP function is architecture-specific and uses inline assembly.
+
+.SH AUTHOR
+0x16000
+
+.SH SEE ALSO
+open(2), read(2), write(2), close(2), lseek(2), getpid(2)
+
