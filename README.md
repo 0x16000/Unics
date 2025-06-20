@@ -27,6 +27,12 @@ For official Unics bootable images, [get to RELEASE tab](https://github.com/0x16
 | `sbin`   | System-dependent software. |
 | `usr`    | User space files (e.g., `include/`, drivers, `sbin/`). |
 
+## Install necessary dependencies for building the kernel
+Just run the file:
+```bash
+./dependencies.sh
+```
+
 ## Compile kernel
 Compiling is straight-forward.
 -
