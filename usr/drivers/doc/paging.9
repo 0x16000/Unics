@@ -1,0 +1,56 @@
+.\" Manpage for Paging driver - section 9 (Kernel Developer Manual)
+.TH PAGING 9 "June 2025" "Unics Kernel Developer Manual" "Paging Subsystem"
+.SH NAME
+paging \- page table and paging subsystem for virtual memory management
+.SH SYNOPSIS
+The paging subsystem implements management of page directories and tables for x86 paging.  
+It supports page mapping, unmapping, page directory switching, and paging enable/disable control.
+
+.SH DESCRIPTION
+Paging provides the mechanism to translate virtual addresses to physical addresses via multi-level page tables.  
+The subsystem manages page directories and page tables, supporting mapping of virtual pages to physical frames with flags like present and writable.
+
+.SH FUNCTIONS
+.TP
+.B paging_init(void)
+Initializes the kernel page directory, sets up initial identity mappings, and enables paging on the CPU.
+
+.TP
+.B paging_enable(void)
+Enables paging by loading the page directory base register (CR3) and setting the PG bit in CR0.
+
+.TP
+.B paging_disable(void)
+Disables paging by clearing the PG bit in CR0.
+
+.TP
+.B paging_map_page(uintptr_t virt_addr, uintptr_t phys_addr, int flags)
+Maps a single virtual page to a physical page with given flags (present, writable, etc).
+
+.TP
+.B paging_unmap_page(uintptr_t virt_addr)
+Unmaps a virtual page, removing its entry from the page tables.
+
+.TP
+.B paging_get_page(uintptr_t virt_addr)
+Returns the physical address currently mapped to the given virtual address, or 0 if not mapped.
+
+.TP
+.B paging_switch_directory(page_directory_t *new_pd)
+Switches the current active page directory to a new one by loading CR3.
+
+.SH IMPLEMENTATION DETAILS
+Paging uses a single-level page directory and page tables, each page aligned to 4 KiB.  
+Page tables contain entries with flags for presence, read/write permissions, and user/supervisor mode.  
+The system relies on a physical memory manager to allocate page frames for page tables.  
+Initial mappings typically identity map kernel memory before enabling paging.
+
+.SH ERROR HANDLING
+Functions return NULL or 0 when mapping/unmapping fails due to invalid addresses or allocation failure.  
+Paging enable/disable functions perform CPU register manipulation directly and assume privilege level 0.
+
+.SH AUTHOR
+0x16000
+
+.SH SEE ALSO
+vmm(9), pmm(9), malloc(3), free(3), cpu(9)
