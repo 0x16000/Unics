@@ -1,5 +1,5 @@
 /*	$OpenBSD: _null.h,v 1.2 2016/09/09 22:07:58 millert Exp $	*/
-/*  $Unics: _null.h,v 1.2 2025/06/20 16:30:09 $*/
+/*  $Unics: _null.h,v 1.2 2025/06/20 16:30:09 $   */
 
 /*
  * Written by Todd C. Miller, September 9, 2016
