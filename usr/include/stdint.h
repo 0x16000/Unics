@@ -1,4 +1,5 @@
 /*	$OpenBSD: stdint.h,v 1.11 2019/01/25 00:19:26 millert Exp $	*/
+/*  $Unics: stdint.h,v 1.11 2025/06/20 18:11:21 $ */
 
 /*
  * Copyright (c) 1997, 2005 Todd C. Miller <millert@openbsd.org>
