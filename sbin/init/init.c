@@ -12,6 +12,7 @@
 #include <sys/process.h>
 #include <vmm.h>
 #include <pmm.h>
+#include <sha2.h>
 
 extern shell_command_t shell_commands[];
 extern size_t shell_commands_count;
