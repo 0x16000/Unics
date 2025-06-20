@@ -19,7 +19,7 @@ For official Unics bootable images, [get to RELEASE tab](https://github.com/0x16
 | Directory | Description |
 |----------|-------------|
 | `bin`    | System/user commands. |
-| `arch`   | Processor-dependent software. |
+| `arch`   | Processor-dependent software. (GCC Machine Description) |
 | `boot`   | Boot-specific code. |
 | `build`  | Build process artifacts (e.g., `.d` files). |
 | `dev`    | Device driver files (e.g., shell, keyboard, etc.). |
