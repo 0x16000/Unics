@@ -26,6 +26,7 @@ For official Unics bootable images, [get to RELEASE tab](https://github.com/0x16
 | `lib`    | Libraries (e.g., C standard library). |
 | `sbin`   | System-dependent software. |
 | `usr`    | User space files (e.g., `include/`, drivers, `sbin/`). |
+| `doc`    | Visible in folders / Documentation (eg., `usr/drivers`) |
 
 ## Install necessary dependencies for building the kernel
 Just run the file:
