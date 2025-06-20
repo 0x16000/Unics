@@ -14,6 +14,7 @@
 #include <pmm.h>
 #include <sha2.h>
 #include <paging.h>
+#include <sys/null.h>
 
 extern shell_command_t shell_commands[];
 extern size_t shell_commands_count;
@@ -113,6 +114,11 @@ int main(void) {
     pmm_reserve_range(0x00100000, 0x00200000); // Reserve kernel (1MB-2MB)
 
     vga_puts("pmm: Physical memory initialized\n");
+    delay(50000);
+
+    // Dev null init
+    null_init();
+    vga_puts("null: dev/null/ initialized\n");
     delay(50000);
 
     // Create processes
