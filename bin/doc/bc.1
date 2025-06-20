@@ -1,0 +1,70 @@
+.\" Manpage for bc - simple calculator
+.TH BC 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+bc \- simple command-line calculator with left-to-right evaluation
+.SH SYNOPSIS
+.B bc
+[\fIexpression\f]
+.SH DESCRIPTION
+The
+.B bc
+utility evaluates simple arithmetic expressions composed of integers and the operators
+.B +,
+.B \-,
+.B *,
+and
+.B /.
+It performs calculations strictly from left to right, without operator precedence.
+
+If
+.I expression
+is provided as command-line arguments, it evaluates the expression and prints the result.
+
+If no expression is given, it enters interactive mode, reading input lines from standard input, evaluating each expression entered, and printing the result.
+
+To exit interactive mode, type
+.B quit
+or send an end-of-file (Ctrl-D).
+
+.SH OPERATORS
+The following operators are supported:
+.TP
+.B +
+Addition
+.TP
+.B \-
+Subtraction
+.TP
+.B *
+Multiplication
+.TP
+.B /
+Division (integer division). Division by zero results in an error.
+
+.SH EXAMPLES
+Evaluate expression from command line:
+.RS
+root@unics:/ bc 3 + 4 * 2
+14
+.RE
+
+Interactive mode usage:
+.RS
+root@unics:/ bc
+bc simple calculator. Type 'quit' or Ctrl-D to exit.
+> 3 + 4 * 2
+14
+> quit
+Goodbye.
+.RE
+
+.SH ERRORS
+If the expression contains an unknown operator, or if division by zero occurs, an error message is printed and the expression is not evaluated.
+
+.SH EXIT STATUS
+The
+.B bc
+utility returns 0 on successful evaluation, and a nonzero value if an error occurs.
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

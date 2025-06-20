@@ -1,0 +1,31 @@
+.\" Manpage for expr - evaluate simple arithmetic expressions
+.TH EXPR 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+expr \- evaluate simple arithmetic expressions
+.SH SYNOPSIS
+.B expr
+num1 operator num2
+.SH DESCRIPTION
+Evaluates the arithmetic expression consisting of two integers and an operator.
+
+Supported operators are:
+.TP
++
+Addition
+.TP
+-
+Subtraction
+.TP
+*
+Multiplication
+.TP
+/
+Integer division
+
+If division by zero is attempted, an error is printed.
+
+.SH EXIT STATUS
+Returns 0 on success, nonzero on error.
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

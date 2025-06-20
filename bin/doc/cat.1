@@ -1,0 +1,34 @@
+.\" Manpage for cat - concatenate and print files
+.TH CAT 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+cat \- concatenate and display file contents
+.SH SYNOPSIS
+.B cat
+\fIfilename\f
+.SH DESCRIPTION
+The
+.B cat
+utility reads the contents of the specified
+.I filename
+and writes it to standard output.
+
+This implementation uses the Unics filesystem API to open, read, and close the file. It reads the file in chunks and prints each chunk to standard output.
+
+.SH OPTIONS
+No options are supported.
+
+.SH EXAMPLES
+Display the contents of a file:
+.RS
+root@unics:/ cat myfile.txt
+Hello, world!
+.RE
+
+.SH ERRORS
+If the file cannot be opened, read, or closed, an error message is printed to standard output with the error code.
+
+.SH EXIT STATUS
+Returns 0 on success, and nonzero if an error occurred during opening, reading, or closing the file.
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

@@ -1,0 +1,31 @@
+.\" Manpage for pwd - print the current working directory
+.TH PWD 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+pwd \- print current working directory
+.SH SYNOPSIS
+.B pwd
+.SH DESCRIPTION
+Prints the absolute path of the current working directory.
+
+The path is constructed by traversing from the current directory up to the root.
+
+Handles deep directory structures up to a maximum depth to prevent infinite loops.
+
+If the current directory is the root, prints a single slash (/).
+
+.SH EXIT STATUS
+Returns
+.B 0
+on success, or
+.B 1
+if an error occurs such as path being too deep.
+
+.SH EXAMPLES
+Print the current directory path:
+.RS
+root@unics:/ pwd
+/home/user/projects
+.RE
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

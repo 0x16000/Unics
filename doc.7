@@ -1,0 +1,96 @@
+.TH UNICS 7 "2025-06-20" "Unics First Edition" "Unics Programmer's Manual"
+.SH NAME
+Unics \- a Unix-like operating system focusing on usability and security
+.SH DESCRIPTION
+.B Unics
+is a Unix-like operating system developed from scratch with a focus on usability and security. It provides a traditional Unix environment while incorporating modern design principles.
+
+The system consists of a monolithic kernel with various subsystems including process management, memory management, filesystems, and device drivers. Unics currently supports the i386 architecture.
+
+.SH SYSTEM ORGANIZATION
+The Unics source tree is organized as follows:
+.TP
+.B bin/
+System and user commands
+.TP
+.B arch/
+Processor-dependent software
+.TP
+.B boot/
+Boot-specific code
+.TP
+.B build/
+Build process artifacts
+.TP
+.B dev/
+Device driver files
+.TP
+.B lib/
+Libraries including the C standard library
+.TP
+.B sbin/
+System-dependent software
+.TP
+.B usr/
+User space files including headers and additional drivers
+
+.SH PROGRAMMING
+Unics follows traditional Unix programming conventions. System functionality is accessed through:
+.IP \(bu 3
+System calls (documented in section 2)
+.IP \(bu 3
+Library functions (documented in section 3)
+.IP \(bu 3
+Device interfaces (documented in section 4)
+
+Programs should be written in C, with assembly used only when necessary for low-level operations.
+
+.SH BUILDING
+To compile the Unics kernel:
+.PP
+.RS
+.nf
+make
+.fi
+.RE
+.PP
+To produce a bootable ISO image:
+.PP
+.RS
+.nf
+make iso
+.fi
+.RE
+.PP
+To run Unics in an emulator:
+.PP
+.RS
+.nf
+make run
+.fi
+.RE
+
+.SH FILES
+.TP
+.I /LICENSE
+Copyright information
+.TP
+.I /README.md
+Basic documentation and source roadmap
+
+.SH SEE ALSO
+.BR unics (1),
+.BR unics (2),
+.BR unics (3),
+.BR unics (4),
+.BR unics (8)
+
+.SH BUGS
+As a new operating system, Unics likely contains various bugs and unimplemented features. Reports are welcome through the project's contribution channels.
+
+.SH AUTHOR
+Developed by 0x16000.
+
+.SH COPYRIGHT
+Copyright information is available in the LICENSE file.
+

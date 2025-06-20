@@ -1,0 +1,54 @@
+.\" Manpage for rmdir - remove empty directories
+.TH RMDIR 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+rmdir \- remove empty directories
+.SH SYNOPSIS
+.B rmdir
+directory
+.SH DESCRIPTION
+The
+.B rmdir
+command deletes the specified
+.I directory
+only if it is empty.
+
+If the directory contains files or subdirectories, the command will fail.
+
+The directory must exist and be a valid directory. If the directory is open or currently in use, removal will be prevented.
+
+.SH ERRORS
+.TP
+.B directory not found
+The specified directory does not exist in the current working directory.
+.TP
+.B not a directory
+The specified name exists but is not a directory.
+.TP
+.B directory not empty
+The directory contains files or subdirectories.
+.TP
+.B directory currently open
+The directory is open or in use and cannot be removed.
+
+.SH EXIT STATUS
+Returns
+.B 0
+if the directory was successfully removed.
+
+Returns a nonzero value if an error occurs.
+
+.SH EXAMPLES
+Remove an empty directory named
+.I logs:
+.RS
+root@unics:/ rmdir logs
+.RE
+
+Attempting to remove a non-empty directory:
+.RS
+root@unics:/ rmdir projects
+rmdir: 'projects' is not empty
+.RE
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

@@ -1,0 +1,33 @@
+.\" Manpage for touch - create empty files or update timestamps
+.TH TOUCH 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+touch \- create new files or update modification time
+.SH SYNOPSIS
+.B touch
+filename [...]
+.SH DESCRIPTION
+Creates one or more empty files if they do not exist.
+
+If a file already exists, the command does not modify its content but could update its modification timestamp (not implemented in this version).
+
+.SH EXIT STATUS
+Returns
+.B 0
+if at least one file was created successfully.
+
+Returns nonzero if no files were created or on error.
+
+.SH EXAMPLES
+Create a new file named
+.I notes.txt:
+.RS
+root@unics:/ touch notes.txt
+.RE
+
+Create multiple files:
+.RS
+root@unics:/ touch file1.txt file2.txt file3.txt
+.RE
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

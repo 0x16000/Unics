@@ -1,0 +1,43 @@
+.\" Manpage for cd - change current directory
+.TH CD 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+cd \- change the current working directory
+.SH SYNOPSIS
+.B cd
+\fIdirectory\f
+.SH DESCRIPTION
+The
+.B cd
+utility changes the current working directory to the specified
+.I directory
+within the Unics filesystem.
+
+Special directory arguments are supported:
+
+.TP
+.B /
+Change to the root directory.
+
+.TP
+.B .
+Stay in the current directory.
+
+.TP
+.B ..
+Change to the parent directory, or root if already at root.
+
+The current working directory path is maintained in the
+.B cwd
+variable.
+
+.SH ERRORS
+If the specified directory does not exist or is not a directory within the current directory, an error message is printed:
+.RS
+cd: no such directory: \fIdirectory\f
+.RE
+
+.SH EXIT STATUS
+Returns 0 on success, 1 if usage is incorrect, and 2 if the target directory is not found.
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

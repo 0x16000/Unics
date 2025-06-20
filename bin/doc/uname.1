@@ -1,0 +1,56 @@
+.\" Manpage for uname - print system information
+.TH UNAME 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+uname \- print system information
+.SH SYNOPSIS
+.B uname
+[\-a] [\-s] [\-n] [\-r] [\-m] [\-v] [\-o]
+.SH DESCRIPTION
+Prints system information about the operating system and hardware.
+
+Options:
+.TP
+.B -a
+Print all information.
+.TP
+.B -s
+Print the kernel name.
+.TP
+.B -n
+Print the network node hostname.
+.TP
+.B -r
+Print the kernel release.
+.TP
+.B -m
+Print the machine hardware name.
+.TP
+.B -v
+Print the kernel build version.
+.TP
+.B -o
+Print the operating system name.
+.TP
+.B --help
+Display help message.
+
+.SH EXIT STATUS
+Returns
+.B 0
+on success.
+
+Returns nonzero if an invalid option is specified.
+
+.SH EXAMPLES
+Print all system info:
+.RS
+root@unics:/ uname -a
+.RE
+
+Print only kernel name:
+.RS
+root@unics:/ uname -s
+.RE
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

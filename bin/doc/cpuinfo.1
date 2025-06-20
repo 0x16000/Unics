@@ -1,0 +1,35 @@
+.\" Manpage for cpuinfo - display detailed CPU feature information
+.TH CPUINFO 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+cpuinfo \- display CPU feature information
+.SH SYNOPSIS
+.B cpuinfo
+.SH DESCRIPTION
+The
+.B cpuinfo
+utility detects and displays detailed information about the CPU features on the current system.
+
+It reports support for core CPU features, memory management capabilities, SIMD extensions, virtualization, security features, power management, and other CPU capabilities.
+
+.SH OUTPUT
+The output is divided into sections, including:
+.IP
+Core Features such as FPU, APIC, TSC, etc.
+.IP
+Memory Management features like PAE, MTRR, PAT.
+.IP
+SIMD Extensions including MMX, SSE, AVX.
+.IP
+Advanced Features such as VMX, AES-NI.
+.IP
+Power Management features like ACPI, EST.
+.IP
+Other Features including Hypervisor support and more.
+
+Each feature is reported as "Yes" if supported or "No" otherwise.
+
+.SH EXIT STATUS
+Returns 0 on success.
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

@@ -1,0 +1,46 @@
+.\" Manpage for rm - remove files
+.TH RM 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+rm \- remove files
+.SH SYNOPSIS
+.B rm
+[-v] filename [...]
+.SH DESCRIPTION
+Removes one or more files specified as
+.I filename.
+
+Optionally, the
+.B -v
+(verbose) flag can be provided to print each removed file name.
+
+If a file is in use or does not exist, an error message is printed.
+
+This command does not support directory removal.
+
+.SH OPTIONS
+.TP
+.B -v
+Enable verbose output, showing each removed file.
+
+.SH EXIT STATUS
+Returns
+.B 0
+if all files were removed successfully.
+
+Returns nonzero on errors such as file in use or file not found.
+
+.SH EXAMPLES
+Remove a file silently:
+.RS
+root@unics:/ rm file.txt
+.RE
+
+Remove files verbosely:
+.RS
+root@unics:/ rm -v file1.txt file2.txt
+removed 'file1.txt'
+removed 'file2.txt'
+.RE
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

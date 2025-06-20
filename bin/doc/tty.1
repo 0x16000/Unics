@@ -1,0 +1,31 @@
+.\" Manpage for tty - print the terminal device name
+.TH TTY 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+tty \- print the terminal device name
+.SH SYNOPSIS
+.B tty
+.SH DESCRIPTION
+Prints the file name of the terminal connected to standard input.
+
+In this implementation, always prints
+.B /dev/shell/
+as the terminal device.
+
+.SH EXIT STATUS
+Returns
+.B 0
+if successful.
+
+Returns
+.B 1
+if unexpected arguments are provided.
+
+.SH EXAMPLES
+Print the terminal device:
+.RS
+root@unics:/ tty
+/dev/shell/
+.RE
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

@@ -1,0 +1,43 @@
+.\" Manpage for yes - print a string repeatedly until stopped
+.TH YES 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+yes \- output a string repeatedly until interrupted
+.SH SYNOPSIS
+.B yes
+[STRING...]
+.SH DESCRIPTION
+Prints the
+.I STRING
+(or
+.B y
+if no string is provided) repeatedly until interrupted by the user (ESC key).
+
+This can be used to automate responses or test output streams.
+
+.SH EXIT STATUS
+Returns
+.B 0
+when interrupted and terminated.
+
+.SH EXAMPLES
+Print
+.B y
+repeatedly:
+.RS
+root@unics:/ yes
+.RE
+
+Print
+.B no
+repeatedly:
+.RS
+root@unics:/ yes no
+.RE
+
+Print multiple strings repeatedly:
+.RS
+root@unics:/ yes I agree
+.RE
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

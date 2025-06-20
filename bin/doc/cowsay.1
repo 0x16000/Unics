@@ -1,0 +1,33 @@
+.\" Manpage for cowsay - display message in a speech bubble with ASCII cow
+.TH COWSAY 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+cowsay \- display a message with an ASCII cow
+.SH SYNOPSIS
+.B cowsay
+[\fImessage\f]
+.SH DESCRIPTION
+The
+.B cowsay
+utility prints a message inside an ASCII speech bubble, followed by a cow figure.
+
+If no message is provided, it prints usage information.
+
+.SH EXAMPLES
+Print a message:
+.RS
+root@unics:/ cowsay Hello Unics!
+ ____________________
+< Hello Unics! >
+ --------------------
+        \   ^__^
+         \  (oo)\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
+.RE
+
+.SH EXIT STATUS
+Returns 0 on success, or 1 if the message is too long.
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

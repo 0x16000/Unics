@@ -1,0 +1,34 @@
+.\" Manpage for sleep - pause execution for a specified time
+.TH SLEEP 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+sleep \- pause execution for a specified duration
+.SH SYNOPSIS
+.B sleep
+time
+.SH DESCRIPTION
+Pauses execution of the calling process for the specified
+.I time.
+
+The
+.I time
+argument is a floating point number representing seconds.
+
+The sleep duration can be fractional for sub-second precision.
+
+.SH EXIT STATUS
+Returns
+.B 0
+upon successful completion.
+
+Returns nonzero if the
+.I time
+argument is invalid.
+
+.SH EXAMPLES
+Sleep for 3.5 seconds:
+.RS
+root@unics:/ sleep 3.5
+.RE
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

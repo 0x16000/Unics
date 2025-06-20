@@ -1,0 +1,35 @@
+.\" Manpage for cp - copy files
+.TH CP 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+cp \- copy files
+.SH SYNOPSIS
+.B cp
+\fIsource destination\f
+.SH DESCRIPTION
+The
+.B cp
+utility copies the contents of
+.I source
+file to the
+.I destination
+file.
+
+It uses the Unics filesystem API to open, create, read from the source, write to the destination, and close files.
+
+.SH USAGE
+The command requires exactly two arguments:
+.TP
+source
+The file to copy from.
+.TP
+destination
+The file to copy to. If it does not exist, it will be created.
+
+.SH ERRORS
+If the source file cannot be opened, or the destination file cannot be created or opened, or if a write error occurs, the utility prints an error message and exits with failure.
+
+.SH EXIT STATUS
+Returns 0 on success, and nonzero if an error occurs.
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

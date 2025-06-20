@@ -1,0 +1,66 @@
+.\" Manpage for mv - move or rename files and directories
+.TH MV 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+mv \- move or rename files and directories
+.SH SYNOPSIS
+.B mv
+source destination
+.SH DESCRIPTION
+The
+.B mv
+command moves or renames the file or directory
+.I source
+to
+.I destination.
+
+The
+.I source
+must exist, and the
+.I destination
+must not already exist.
+
+This command performs a rename operation within the same filesystem.
+
+.SH ERRORS
+The following error conditions may occur:
+.TP
+.B MV_ERR_ARGS
+Incorrect number of arguments provided.
+.TP
+.B MV_ERR_SOURCE_NOT_FOUND
+Source file or directory does not exist.
+.TP
+.B MV_ERR_DEST_EXISTS
+Destination file or directory already exists.
+.TP
+.B MV_ERR_SOURCE_OPEN
+Source file is currently open and cannot be moved.
+.TP
+.B MV_ERR_NAME_TOO_LONG
+Destination filename exceeds maximum allowed length.
+
+.SH EXIT STATUS
+Returns
+.B 0
+on success. Nonzero codes indicate failure as described.
+
+.SH EXAMPLES
+Rename
+.I oldfile.txt
+to
+.I newfile.txt:
+.RS
+root@unics:/ mv oldfile.txt newfile.txt
+.RE
+
+Move
+.I document.txt
+to the
+.I backup/
+directory:
+.RS
+root@unics:/ mv document.txt backup/
+.RE
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

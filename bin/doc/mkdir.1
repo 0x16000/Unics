@@ -1,0 +1,52 @@
+.\" Manpage for mkdir - create a new directory
+.TH MKDIR 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+mkdir \- create new directories
+.SH SYNOPSIS
+.B mkdir
+dirname
+.SH DESCRIPTION
+The
+.B mkdir
+utility creates a new directory named
+.B dirname
+in the current working directory or specified path.
+
+The directory name must not exceed the maximum allowed length defined by the filesystem.
+
+If a file or directory with the specified name already exists, the operation fails with an error.
+
+This command only creates one directory at a time and does not support recursive directory creation.
+
+.SH ERRORS
+The
+.B mkdir
+command can fail for several reasons:
+.TP
+.B FS_FULL
+The filesystem is full and cannot allocate space for the new directory.
+.TP
+.B NAME_TOO_LONG
+The provided directory name exceeds the maximum length permitted.
+.TP
+.B ALREADY_EXISTS
+A file or directory with the given name already exists.
+
+.SH EXIT STATUS
+Returns
+.B 0
+on success. Returns a nonzero exit code on failure as described above.
+
+.SH EXAMPLES
+Create a directory named
+.I projects:
+.RS
+root@unics:/ mkdir projects
+.RE
+Verify that the directory was created:
+.RS
+root@unics:/ ls -l
+.RE
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

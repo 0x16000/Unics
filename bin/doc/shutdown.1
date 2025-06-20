@@ -1,0 +1,39 @@
+.\" Manpage for shutdown - safely shutdown or halt the system
+.TH SHUTDOWN 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+shutdown \- safely shutdown or halt the system
+.SH SYNOPSIS
+.B shutdown
+[\-f]
+.SH DESCRIPTION
+The
+.B shutdown
+command initiates a system power-off or halt.
+
+It attempts multiple hardware-specific methods to power off the machine or virtual machine environment.
+
+.TP
+The
+.B \-f
+option forces a system reset if normal shutdown methods fail.
+
+In virtualized environments, it tries VirtualBox and QEMU specific shutdown ports.
+
+If the system cannot be powered off, it halts execution to prevent further operation.
+
+.SH EXIT STATUS
+This command does not normally return. It returns only if shutdown fails.
+
+.SH EXAMPLES
+Shutdown the system cleanly:
+.RS
+root@unics:/ shutdown
+.RE
+
+Force an immediate shutdown or reset:
+.RS
+root@unics:/ shutdown -f
+.RE
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

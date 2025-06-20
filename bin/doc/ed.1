@@ -1,0 +1,34 @@
+.\" Manpage for ed - simple line editor
+.TH ED 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+ed \- simple line text editor
+.SH SYNOPSIS
+.B ed
+.SH DESCRIPTION
+A simple line editor that supports basic commands:
+
+.TP
+w
+Enter insert mode to start typing text.
+
+.TP
+.
+Exit insert mode (only in insert mode).
+
+.TP
+q
+Quit the editor.
+
+.TP
+h
+Show help.
+
+.TP
+:w filename
+Write the buffer to the specified file.
+
+.SH EXIT STATUS
+Returns 0 on success, nonzero on error.
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

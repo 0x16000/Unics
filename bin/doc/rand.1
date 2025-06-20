@@ -1,0 +1,53 @@
+.\" Manpage for rand - generate pseudo-random numbers
+.TH RAND 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+rand \- generate pseudo-random numbers
+.SH SYNOPSIS
+.B rand
+[\fIupper_bound\fR]
+.SH DESCRIPTION
+Generates a pseudo-random number using a linear congruential generator algorithm.
+
+If
+.B upper_bound
+is specified, the output is a uniformly distributed number between
+.B 0
+and
+.B upper_bound
+inclusive.
+
+If
+.B upper_bound
+is omitted, a 32-bit pseudo-random number is printed.
+
+.SH OPTIONS
+.TP
+\fIupper_bound\fR
+Optional maximum value for the random number.
+
+.SH EXIT STATUS
+Returns
+.B 0
+on success.
+
+Returns
+.B 1
+if the provided
+.B upper_bound
+is not a positive integer.
+
+.SH EXAMPLES
+Generate a random number between 0 and 100:
+.RS
+root@unics:/ rand 100
+42
+.RE
+
+Generate a random 32-bit unsigned integer:
+.RS
+root@unics:/ rand
+1234567890
+.RE
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.

@@ -1,0 +1,43 @@
+.\" Manpage for reboot - reboot the system
+.TH REBOOT 1 "2025-06-20" "Unics OS" "User Commands"
+.SH NAME
+reboot \- reboot the operating system
+.SH SYNOPSIS
+.B reboot
+[\-f]
+.SH DESCRIPTION
+The
+.B reboot
+command initiates a system reboot using multiple methods:
+
+.TP
+VirtualBox port reset (0x4004)
+.TP
+PCI reset via I/O port 0xCF9
+.TP
+8042 keyboard controller reset
+.TP
+Fallback triple fault causing CPU reset
+
+Option
+.B \-f
+forces a reboot attempt.
+
+If all methods fail, the system halts.
+
+.SH EXIT STATUS
+This command does not return on success. On failure, it halts the system.
+
+.SH EXAMPLES
+Reboot the system normally:
+.RS
+root@unics:/ reboot
+.RE
+
+Force a reboot:
+.RS
+root@unics:/ reboot -f
+.RE
+
+.SH AUTHOR
+Written by 0x16000 for the Unics operating system.
