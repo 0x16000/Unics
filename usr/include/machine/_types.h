@@ -1,6 +1,7 @@
-#ifndef _MACHINE__TYPES_H_
-#define _MACHINE__TYPES_H_
+#ifndef _MACHINE_TYPES_H
+#define _MACHINE_TYPES_H
 
+/* Exact-width integer types */
 typedef signed char       __int8_t;
 typedef unsigned char     __uint8_t;
 typedef signed short      __int16_t;
@@ -10,4 +11,16 @@ typedef unsigned int      __uint32_t;
 typedef signed long long  __int64_t;
 typedef unsigned long long __uint64_t;
 
-#endif /* _MACHINE__TYPES_H_ */
+/* Pointer types */
+typedef signed long       __intptr_t;
+typedef unsigned long     __uintptr_t;
+
+/* Size type (typically matches pointer size) */
+typedef unsigned long     __size_t;
+typedef signed long       __ssize_t;
+
+/* Minimum-width integer types */
+typedef __int8_t          __int_least8_t;
+typedef __uint8_t         __uint_least8_t;
+
+#endif /* _MACHINE_TYPES_H */
