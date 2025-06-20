@@ -31,6 +31,7 @@ For official Unics bootable images, [get to RELEASE tab](https://github.com/0x16
 ## Install necessary dependencies for building the kernel
 Just run the file:
 ```bash
+chmod +x dependencies.pl
 ./dependencies.pl
 ```
 Or:
