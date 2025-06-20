@@ -1,6 +1,6 @@
 /*	$OpenBSD: bitstring.h,v 1.7 2024/08/26 11:52:54 bluhm Exp $	*/
 /*	$NetBSD: bitstring.h,v 1.5 1997/05/14 15:49:55 pk Exp $	*/
-/*  $Unics: bitstring.h, v 1.7 2025/06/20 16:19:20 $*/
+/*  $Unics: bitstring.h, v 1.7 2025/06/20 16:19:20 $ */
 
 /*
  * Copyright (c) 1989, 1993
