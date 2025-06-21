@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <sys/cdefs.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 typedef int64_t off_t;
 typedef int pid_t;

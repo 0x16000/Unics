@@ -9,6 +9,7 @@
 
 // Entries per page table (assuming 32-bit x86 with 4KB pages)
 #define PAGE_ENTRIES 1024
+#define PAGE_SIZE 4096
 
 // Page flags
 #define PAGE_PRESENT    0x001

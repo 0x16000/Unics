@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <sys/fs.h>
+#include <sys/types.h>
 
 int pwd_main(int argc, char *argv[]) {
     (void)argc;

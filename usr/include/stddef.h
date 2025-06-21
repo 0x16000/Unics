@@ -1,138 +1,85 @@
-#ifndef _STDDEF_H
-#define _STDDEF_H 1
+/*	$OpenBSD: stddef.h,v 1.14 2017/01/06 14:36:50 kettenis Exp $	*/
+/*	$NetBSD: stddef.h,v 1.4 1994/10/26 00:56:26 cgd Exp $	*/
+/*  $Unics: stddef.h,v 1.14 2025/06/ 14:03:53 $    */
 
-/* Prevent C++ name mangling */
-#ifdef __cplusplus
-extern "C" {
+/*-
+ * Copyright (c) 1990 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)stddef.h	5.5 (Berkeley) 4/3/91
+ */
+
+#ifndef _STDDEF_H_
+#define _STDDEF_H_
+
+#include <sys/cdefs.h>
+#include <sys/_null.h>
+#include <sys/_types.h>
+
+#ifndef _PTRDIFF_T_DEFINED_
+#define _PTRDIFF_T_DEFINED_
+typedef	__ptrdiff_t	ptrdiff_t;
 #endif
 
-/* GCC specific attributes and optimizations */
-#ifdef __GNUC__
-    #define PACKED        __attribute__((packed))
-    #define ALIGNED(x)    __attribute__((aligned(x)))
-    #define UNUSED        __attribute__((unused))
-    #define DEPRECATED    __attribute__((deprecated))
-    #define PURE         __attribute__((pure))
-    #define CONST        __attribute__((const))
-    #define NORETURN     __attribute__((noreturn))
+#ifndef	_SIZE_T_DEFINED_
+#define	_SIZE_T_DEFINED_
+typedef	__size_t	size_t;
+#endif
+
+/* in C++, wchar_t is a built-in type */
+#if !defined(_WCHAR_T_DEFINED_) && !defined(__cplusplus)
+#define _WCHAR_T_DEFINED_
+typedef	__wchar_t	wchar_t;
+#endif
+
+#ifndef	_WINT_T_DEFINED_
+#define	_WINT_T_DEFINED_
+typedef	__wint_t	wint_t;
+#endif
+
+#ifndef	_MBSTATE_T_DEFINED_
+#define	_MBSTATE_T_DEFINED_
+typedef	__mbstate_t	mbstate_t;
+#endif
+
+#if __GNUC_PREREQ__(4, 0)
+#define	offsetof(type, member)	__builtin_offsetof(type, member)
 #else
-    #define PACKED
-    #define ALIGNED(x)
-    #define UNUSED
-    #define DEPRECATED
-    #define PURE
-    #define CONST
-    #define NORETURN
+#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 #endif
 
-/* NULL pointer definition */
-#ifdef __cplusplus
-    #define NULL 0L
-#else
-    #define NULL ((void*)0)
-#endif
-
-/* Size type definition */
-#ifndef _SIZE_T_DEFINED
-    #define _SIZE_T_DEFINED
-    typedef unsigned int size_t;
-#endif
-
-/* Signed size type (for differences) */
-#ifndef _SSIZE_T_DEFINED
-    #define _SSIZE_T_DEFINED
-    typedef int ssize_t;
-#endif
-
-/* Pointer difference type */
-#ifndef _PTRDIFF_T_DEFINED
-    #define _PTRDIFF_T_DEFINED
-    typedef int ptrdiff_t;
-#endif
-
-/* Maximum alignment type */
+#if __ISO_C_VISIBLE >= 2011 || __cplusplus >= 201103
+#ifndef __CLANG_MAX_ALIGN_T_DEFINED
+#define __CLANG_MAX_ALIGN_T_DEFINED
 typedef struct {
-    long long _ll ALIGNED(8);
-    long double _ld ALIGNED(8);
-    void* _ptr ALIGNED(4);
+	long long __max_align_ll __aligned(__alignof__(long long));
+	long double __max_align_ld __aligned(__alignof__(long double));
 } max_align_t;
-
-/* Wide character type */
-#ifndef _WCHAR_T_DEFINED
-    #define _WCHAR_T_DEFINED
-    typedef unsigned short wchar_t;
+#endif
 #endif
 
-/* Verify fundamental type sizes */
-_Static_assert(sizeof(size_t) == 4, "size_t must be 4 bytes");
-_Static_assert(sizeof(ptrdiff_t) == 4, "ptrdiff_t must be 4 bytes");
-_Static_assert(sizeof(wchar_t) == 2, "wchar_t must be 2 bytes");
-
-/* Offset of a member within a struct */
-#define offsetof(type, member) __builtin_offsetof(type, member)
-
-/* Container of macro - get struct pointer from member pointer */
-#define container_of(ptr, type, member) ({ \
-    const typeof(((type *)0)->member) * __mptr = (ptr); \
-    (type *)((char *)__mptr - offsetof(type, member)); })
-
-/* Size calculation utilities */
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
-#define FIELD_SIZEOF(type, field) sizeof(((type *)0)->field)
-
-/* Memory barrier macros */
-#define MEMORY_BARRIER()           __asm__ __volatile__("" ::: "memory")
-#define READ_BARRIER()            __asm__ __volatile__("" ::: "memory")
-#define WRITE_BARRIER()           __asm__ __volatile__("" ::: "memory")
-
-/* Debug utilities */
-#ifdef DEBUG
-    #define ASSERT_ALIGNMENT(ptr, align) \
-        do { \
-            if (!IS_ALIGNED((uintptr_t)(ptr), align)) { \
-                __builtin_trap(); \
-            } \
-        } while(0)
-
-    #define VERIFY_PTR(ptr) \
-        do { \
-            if ((ptr) == NULL) { \
-                __builtin_trap(); \
-            } \
-        } while(0)
-#else
-    #define ASSERT_ALIGNMENT(ptr, align) ((void)0)
-    #define VERIFY_PTR(ptr) ((void)0)
-#endif
-
-/* Compile-time type checking */
-#define MUST_BE_ARRAY(arr) \
-    _Static_assert(!__builtin_types_compatible_p(typeof(arr), typeof(&(arr)[0])), \
-                  "Not an array")
-
-/* Build-time calculations */
-#define COMPILETIME_ASSERT(cond, msg) \
-    _Static_assert(cond, msg)
-
-/* Function type safety */
-#define RETURNS_NONNULL     __attribute__((returns_nonnull))
-#define NONNULL_PARAMS(...) __attribute__((nonnull(__VA_ARGS__)))
-
-/* Architecture-specific optimizations */
-#define CACHELINE_SIZE 64
-#define PAGE_SIZE 4096
-
-#define CACHELINE_ALIGNED ALIGNED(CACHELINE_SIZE)
-#define PAGE_ALIGNED     ALIGNED(PAGE_SIZE)
-
-/* Version information */
-#define STDDEF_VERSION "1.0.0"
-#define STDDEF_VERSION_MAJOR 1
-#define STDDEF_VERSION_MINOR 0
-#define STDDEF_VERSION_PATCH 0
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* _STDDEF_H */
+#endif /* _STDDEF_H_ */
