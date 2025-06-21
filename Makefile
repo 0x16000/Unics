@@ -11,7 +11,7 @@ AS             := nasm
 LD             := ld
 OBJCOPY        := objcopy
 GRUB_MKRESCUE  := grub-mkrescue
-QEMU           := qemu-system-i386
+QEMU           := qemu-system-i386  # Works fine for i686 code
 
 # --- Directory Structure ---
 SRCDIR         := .
@@ -30,9 +30,10 @@ WARNINGS       := -Wall -Wextra -Werror=implicit-function-declaration \
                   -Werror=incompatible-pointer-types -Werror=int-conversion
 SECURITY       := -fno-stack-protector -fno-PIE -fno-PIC
 
-CFLAGS         := -m32 -std=gnu99 -ffreestanding $(OPTIMIZATION) $(WARNINGS) $(SECURITY) \
+CFLAGS         := -m32 -march=i686 -std=gnu99 -ffreestanding $(OPTIMIZATION) $(WARNINGS) $(SECURITY) \
                   -I$(INCDIR) -I. -nostdlib -fno-common -fno-builtin \
                   -fno-omit-frame-pointer -ggdb3
+
 ASFLAGS        := -f elf32 -F dwarf -g
 LDFLAGS        := -m32 -nostdlib -nostartfiles -T linker.ld -Wl,--gc-sections \
                   -Wl,-Map=$(BUILDDIR)/$(KERNEL_NAME).map
