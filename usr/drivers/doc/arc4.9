@@ -1,0 +1,51 @@
+.TH ARC4 9 "June 2025" "Unics Kernel Developer Manual" "Cryptography Subsystem"
+.SH NAME
+arc4 \- ARC4 stream cipher implementation for Unics kernel
+.SH SYNOPSIS
+The ARC4 driver provides a lightweight symmetric stream cipher for use within the Unics kernel and userland components.  
+It is based on the original RC4 algorithm and is compatible with OpenBSD's arc4 driver.
+
+.SH DESCRIPTION
+The ARC4 driver is implemented in \fCarc4.c\fP and provides the following core abstractions:
+
+.TP
+.B rc4_ctx
+Structure holding the ARC4 state, including the permutation array and internal counters.
+.TP
+.B rc4_keysetup(struct rc4_ctx *ctx, u_char *key, u_int32_t klen)
+Initializes the cipher state using the provided key.
+.TP
+.B rc4_crypt(struct rc4_ctx *ctx, u_char *src, u_char *dst, u_int32_t len)
+Encrypts or decrypts data using the ARC4 stream.
+.TP
+.B rc4_getbytes(struct rc4_ctx *ctx, u_char *dst, u_int32_t len)
+Generates pseudorandom bytes without requiring input data.
+.TP
+.B rc4_skip(struct rc4_ctx *ctx, u_int32_t len)
+Advances the cipher state without producing output (useful for dropping initial keystream bytes).
+
+.SH IMPLEMENTATION DETAILS
+The ARC4 driver maintains a 256-byte permutation array representing the cipher state.  
+State initialization mixes the key into the array using a key scheduling algorithm (KSA).  
+Encryption, decryption, and byte generation use the pseudorandom generation algorithm (PRGA) that updates indices and swaps state elements for each output byte.  
+Swapping is done via the \fCRC4SWAP()\fP macro for efficiency.
+
+ARC4's design is simple and fast but is considered weak for some cryptographic purposes. The driver is mainly provided for compatibility and legacy support.
+
+.SH ERRORS
+This driver does not define specific error codes. It assumes that the caller manages buffer sizes and input validity.
+
+.SH FILES
+.TP
+.B arc4.c
+ARC4 cipher implementation source file.
+.TP
+.B arc4.h
+Header file declaring ARC4 structures and functions.
+
+.SH SEE ALSO
+crypto(9), random(9)
+
+.SH AUTHOR
+Originally written by Markus Friedl <markus@openbsd.org>  
+Ported and maintained in Unics by 0x16000
