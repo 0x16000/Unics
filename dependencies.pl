@@ -4,7 +4,7 @@
 #                                                         #
 #               UNICS DEPENDENCIES INSTALLER              #
 #                                                         #
-#                  Version 1.0 - 2025                     #
+#                  Version 1.1 - 2025                     #
 #                                                         #
 ###########################################################
 
@@ -24,19 +24,22 @@ my $NC = "\033[0m"; # No Color
 my %ARCH_DEPS = (
     nasm => "nasm",
     xorriso => "xorriso",
-    qemu => "qemu-system-x86"
+    qemu => "qemu-system-x86",
+    gcc_multilib => "gcc-multilib"
 );
 
 my %UBUNTU_DEPS = (
     nasm => "nasm",
     xorriso => "xorriso",
-    qemu => "qemu-system"
+    qemu => "qemu-system",
+    gcc_multilib => "gcc-multilib"
 );
 
 my %FEDORA_DEPS = (
     nasm => "nasm",
     xorriso => "xorriso",
-    qemu => "qemu-system-x86"
+    qemu => "qemu-system-x86",
+    gcc_multilib => "glibc-devel.i686"  # Fedora equivalent for multilib dev
 );
 
 # Function to display error messages
