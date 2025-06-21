@@ -3,6 +3,7 @@
 #include <keyboard.h>
 #include <vga.h>
 #include <limits.h>
+#include <stdlib.h>
 
 #define CMD_COL_WIDTH 18
 #define DESC_COL_WIDTH 45
@@ -136,7 +137,7 @@ int help_main(int argc, char **argv) {
     return 0;
 }
 
-// History command implementation
+// History command implementation using TAILQ
 int history_main(int argc, char **argv) {
     (void)argc;
     (void)argv;
@@ -147,28 +148,42 @@ int history_main(int argc, char **argv) {
     }
 
     vga_puts("Command history:\n");
-    for (int i = 0; i < g_shell_ctx->history_count; i++) {
+    
+    history_entry_t *entry;
+    int index = 1;
+    
+    TAILQ_FOREACH(entry, &g_shell_ctx->history_head, entries) {
         vga_puts("  ");
-        char num_str[8];
+        
         // Simple integer to string conversion
-        int num = i + 1;
+        char num_str[8];
+        int num = index;
         int digits = 0;
         int temp = num;
-        while (temp > 0) {
-            temp /= 10;
-            digits++;
-        }
-        for (int j = digits - 1; j >= 0; j--) {
-            num_str[j] = '0' + (num % 10);
-            num /= 10;
+        
+        if (temp == 0) {
+            num_str[0] = '0';
+            digits = 1;
+        } else {
+            while (temp > 0) {
+                temp /= 10;
+                digits++;
+            }
+            temp = num;
+            for (int j = digits - 1; j >= 0; j--) {
+                num_str[j] = '0' + (temp % 10);
+                temp /= 10;
+            }
         }
         num_str[digits] = '\0';
         
         vga_puts(num_str);
         vga_puts("  ");
-        vga_puts(g_shell_ctx->history[i]);
+        vga_puts(entry->command);
         vga_putchar('\n');
+        index++;
     }
+    
     return 0;
 }
 
@@ -249,8 +264,11 @@ void shell_init(shell_context_t *ctx, shell_command_t *commands, size_t num_comm
     ctx->cursor_pos = 0;
     ctx->insert_mode = true;
     ctx->history_count = 0;
-    ctx->history_index = -1;
+    ctx->history_current = NULL;
     ctx->last_exit_status = 0;
+    
+    // Initialize the history queue
+    TAILQ_INIT(&ctx->history_head);
     
     // Set global context for built-in commands
     g_shell_ctx = ctx;
@@ -260,53 +278,78 @@ void shell_init(shell_context_t *ctx, shell_command_t *commands, size_t num_comm
     vga_puts("Type 'help' for available commands, 'exit' to quit.\n\n");
 }
 
-// Add command to history
+// Cleanup function to free history entries
+void shell_cleanup(shell_context_t *ctx) {
+    history_entry_t *entry, *tmp;
+    
+    TAILQ_FOREACH_SAFE(entry, &ctx->history_head, entries, tmp) {
+        TAILQ_REMOVE(&ctx->history_head, entry, entries);
+        free(entry);
+    }
+    
+    ctx->history_count = 0;
+    ctx->history_current = NULL;
+}
+
+// Add command to history using TAILQ
 void shell_add_to_history(shell_context_t *ctx, const char *command) {
     if (strlen(command) == 0) return;
     
     // Don't add duplicate consecutive commands
-    if (ctx->history_count > 0 && 
-        strcmp(ctx->history[ctx->history_count - 1], command) == 0) {
-        return;
-    }
-    
-    // Shift history if full
-    if (ctx->history_count >= SHELL_HISTORY_SIZE) {
-        for (int i = 0; i < SHELL_HISTORY_SIZE - 1; i++) {
-            strcpy(ctx->history[i], ctx->history[i + 1]);
+    if (!TAILQ_EMPTY(&ctx->history_head)) {
+        history_entry_t *last = TAILQ_LAST(&ctx->history_head, history_head);
+        if (strcmp(last->command, command) == 0) {
+            return;
         }
-        ctx->history_count = SHELL_HISTORY_SIZE - 1;
     }
     
-    // Add new command
-    strcpy(ctx->history[ctx->history_count], command);
+    // Remove oldest entry if we've reached the limit
+    if (ctx->history_count >= SHELL_HISTORY_SIZE) {
+        history_entry_t *oldest = TAILQ_FIRST(&ctx->history_head);
+        TAILQ_REMOVE(&ctx->history_head, oldest, entries);
+        free(oldest);
+        ctx->history_count--;
+    }
+    
+    // Allocate new entry
+    history_entry_t *new_entry = malloc(sizeof(history_entry_t));
+    if (!new_entry) {
+        return; // Memory allocation failed
+    }
+    
+    // Copy command and add to tail
+    strcpy(new_entry->command, command);
+    TAILQ_INSERT_TAIL(&ctx->history_head, new_entry, entries);
     ctx->history_count++;
 }
 
-// Navigate command history
+// Navigate command history using TAILQ
 void shell_navigate_history(shell_context_t *ctx, int direction) {
-    if (ctx->history_count == 0) return;
+    if (TAILQ_EMPTY(&ctx->history_head)) return;
     
-    if (direction > 0) { // Up arrow
-        if (ctx->history_index == -1) {
-            ctx->history_index = ctx->history_count - 1;
-        } else if (ctx->history_index > 0) {
-            ctx->history_index--;
-        }
-    } else { // Down arrow
-        if (ctx->history_index != -1) {
-            ctx->history_index++;
-            if (ctx->history_index >= ctx->history_count) {
-                ctx->history_index = -1;
+    if (direction > 0) { // Up arrow - go to previous command
+        if (ctx->history_current == NULL) {
+            // Start from the last command
+            ctx->history_current = TAILQ_LAST(&ctx->history_head, history_head);
+        } else {
+            // Move to previous command
+            history_entry_t *prev = TAILQ_PREV(ctx->history_current, history_head, entries);
+            if (prev != NULL) {
+                ctx->history_current = prev;
             }
+        }
+    } else { // Down arrow - go to next command
+        if (ctx->history_current != NULL) {
+            history_entry_t *next = TAILQ_NEXT(ctx->history_current, entries);
+            ctx->history_current = next; // Can be NULL (no more commands)
         }
     }
     
     // Clear current input and load history
     shell_clear_input_line(ctx);
     
-    if (ctx->history_index != -1) {
-        strcpy(ctx->input_buffer, ctx->history[ctx->history_index]);
+    if (ctx->history_current != NULL) {
+        strcpy(ctx->input_buffer, ctx->history_current->command);
         ctx->input_length = strlen(ctx->input_buffer);
     } else {
         ctx->input_buffer[0] = '\0';
@@ -355,7 +398,7 @@ void shell_run(shell_context_t *ctx) {
         // Reset input state
         ctx->input_length = 0;
         ctx->cursor_pos = 0;
-        ctx->history_index = -1;
+        ctx->history_current = NULL;
         
         while (true) {
             char c = kb_getchar();

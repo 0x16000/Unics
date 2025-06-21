@@ -8,6 +8,7 @@
 #include <io.h>
 #include <string.h>
 #include <sys/fs.h>
+#include <sys/queue.h>
 
 #define SHELL_MAX_INPUT_LENGTH 256
 #define SHELL_MAX_ARGS 32
@@ -24,7 +25,16 @@ typedef struct {
     int (*func)(int argc, char **argv);
 } shell_command_t;
 
-// Shell context structure with history and improved features
+// History entry structure using TAILQ
+typedef struct history_entry {
+    char command[SHELL_MAX_INPUT_LENGTH];
+    TAILQ_ENTRY(history_entry) entries;
+} history_entry_t;
+
+// History head structure
+TAILQ_HEAD(history_head, history_entry);
+
+// Shell context structure with improved queue-based history
 typedef struct {
     char input_buffer[SHELL_MAX_INPUT_LENGTH];
     size_t input_length;
@@ -32,10 +42,10 @@ typedef struct {
     size_t num_commands;
     bool running;
     
-    // Command history
-    char history[SHELL_HISTORY_SIZE][SHELL_MAX_INPUT_LENGTH];
+    // Command history using tail queue
+    struct history_head history_head;
     int history_count;
-    int history_index;
+    history_entry_t *history_current;  // Current position in history navigation
     
     // Input state
     size_t cursor_pos;
@@ -53,6 +63,7 @@ void shell_process_input(shell_context_t *ctx);
 int shell_execute(shell_context_t *ctx, int argc, char **argv);
 void shell_print_error(const char *message);
 void shell_print_not_found(const char *command);
+void shell_cleanup(shell_context_t *ctx);
 
 // History functions
 void shell_add_to_history(shell_context_t *ctx, const char *command);
