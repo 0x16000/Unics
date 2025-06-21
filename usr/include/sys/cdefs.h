@@ -1,6 +1,10 @@
 #ifndef _SYS_CDEFS_H
 #define _SYS_CDEFS_H 1
 
+#ifndef __dead
+#define __dead __attribute__((__noreturn__))
+#endif
+
 /* Macro to identify the compiler */
 #if defined(__GNUC__)
 # define __GNUC_PREREQ(maj, min) \
@@ -8,6 +12,17 @@
 #else
 # define __GNUC_PREREQ(maj, min) 0
 #endif
+
+/* Check GCC version compatibility */
+#ifndef __GNUC_PREREQ__
+# if defined(__GNUC__) && defined(__GNUC_MINOR__)
+#  define __GNUC_PREREQ__(x, y) \
+     (__GNUC__ > (x) || (__GNUC__ == (x) && __GNUC_MINOR__ >= (y)))
+# else
+#  define __GNUC_PREREQ__(x, y) 0
+# endif
+#endif
+
 
 /* Compiler feature macros */
 #define __CONCAT(x,y)   x ## y
