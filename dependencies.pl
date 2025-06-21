@@ -33,6 +33,12 @@ my %UBUNTU_DEPS = (
     qemu => "qemu-system"
 );
 
+my %FEDORA_DEPS = (
+    nasm => "nasm",
+    xorriso => "xorriso",
+    qemu => "qemu-system-x86"
+);
+
 # Function to display error messages
 sub error {
     print "${RED}[ERROR]${NC} $_[0]\n";
@@ -66,7 +72,7 @@ sub install_arch {
         error("Failed to update system packages");
         return 0;
     }
-    
+
     foreach my $pkg (values %ARCH_DEPS) {
         if (system("sudo pacman -S --noconfirm $pkg") != 0) {
             error("Failed to install $pkg");
@@ -83,9 +89,26 @@ sub install_ubuntu {
         error("Failed to update package lists");
         return 0;
     }
-    
+
     foreach my $pkg (values %UBUNTU_DEPS) {
         if (system("sudo apt install -y $pkg") != 0) {
+            error("Failed to install $pkg");
+            return 0;
+        }
+    }
+    return 1;
+}
+
+# Function to install dependencies for Fedora
+sub install_fedora {
+    info("Updating dnf and installing dependencies for Fedora...");
+    if (system("sudo dnf -y update") != 0) {
+        error("Failed to update system packages");
+        return 0;
+    }
+
+    foreach my $pkg (values %FEDORA_DEPS) {
+        if (system("sudo dnf -y install $pkg") != 0) {
             error("Failed to install $pkg");
             return 0;
         }
@@ -96,12 +119,15 @@ sub install_ubuntu {
 # Main installation function
 sub install_dependencies {
     my $distro = lc(shift);
-    
+
     if ($distro eq 'arch') {
         return install_arch();
     }
     elsif ($distro eq 'ubuntu') {
         return install_ubuntu();
+    }
+    elsif ($distro eq 'fedora') {
+        return install_fedora();
     }
     else {
         error("Unsupported distribution: $distro");
@@ -120,17 +146,17 @@ sub check_sudo {
 # Main execution
 sub main {
     print "\n${BLUE}UNICS Dependencies Installer${NC}\n\n";
-    
+
     # Prompt for installation confirmation
     print "Do you want to install the dependencies? (yes/no) ";
     my $answer = <STDIN>;
     chomp $answer;
-    
+
     unless ($answer =~ /^y(es)?$/i) {
         info("Installation cancelled by user.");
         exit(0);
     }
-    
+
     # Detect distribution if not provided
     my $detected_distro = "";
     if (command_exists("pacman")) {
@@ -139,28 +165,31 @@ sub main {
     elsif (command_exists("apt")) {
         $detected_distro = "ubuntu";
     }
-    
+    elsif (command_exists("dnf")) {
+        $detected_distro = "fedora";
+    }
+
     my $distro;
     # Prompt for distribution selection
     if ($detected_distro) {
         print "Detected \u$detected_distro. Is this correct? (yes/no) ";
         my $confirm = <STDIN>;
         chomp $confirm;
-        
+
         if ($confirm =~ /^y(es)?$/i) {
             $distro = $detected_distro;
         }
     }
-    
+
     unless ($distro) {
-        print "Which distro are you using? (arch/ubuntu) ";
+        print "Which distro are you using? (arch/ubuntu/fedora) ";
         $distro = <STDIN>;
         chomp $distro;
     }
-    
+
     # Check sudo before proceeding
     check_sudo();
-    
+
     # Install dependencies
     if (install_dependencies(lc($distro))) {
         success("All dependencies installed successfully!");
