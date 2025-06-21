@@ -38,7 +38,7 @@ int main(void) {
     vga_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
 
     // BSD-style boot header
-    vga_puts("Unics/i386 0.1-RELEASE #0: ");
+    vga_puts("Unics/i686 0.1-RELEASE #0: ");
     vga_puts(__DATE__);
     vga_puts("\n");
     vga_puts("Copyright (c) 2025 0x16000. All rights reserved.\n");
@@ -47,7 +47,7 @@ int main(void) {
     delay(100000);
     
     // System identification
-    vga_puts("CPU: i386-class processor\n");
+    vga_puts("CPU: i686-class processor\n");
     delay(50000);
     
     vga_puts("\n");
@@ -149,7 +149,7 @@ int main(void) {
     
     // BSD-style welcome message
     vga_puts("\n");
-    vga_puts("Unics/i386 0.1-RELEASE (GENERIC)\n");
+    vga_puts("Unics/i686 0.1-RELEASE (GENERIC)\n");
     vga_puts("\n");
     vga_puts("Welcome to Unics!\n");
     vga_puts("\n");
