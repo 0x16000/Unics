@@ -15,6 +15,7 @@
 #include <sha2.h>
 #include <paging.h>
 #include <sys/null.h>
+#include <sys/refcnt.h>
 
 extern shell_command_t shell_commands[];
 extern size_t shell_commands_count;
@@ -27,6 +28,8 @@ static const struct multiboot_header multiboot_header __attribute__((used)) = {
 
 extern uint32_t multiboot_info_ptr;
 extern uint32_t __bitmap_start;
+
+struct refcnt ss_refcnt;
 
 void early_cpu_init(void);
 
@@ -96,6 +99,9 @@ int main(void) {
     fs_close(&root_fs, "README"); // close file when done
 
     delay(100000);
+
+    // Refcnt init
+    refcnt_init(&ss_refcnt);
 
     // Initialize virtual memory
     vmm_init();

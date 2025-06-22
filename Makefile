@@ -30,9 +30,12 @@ WARNINGS       := -Wall -Wextra -Werror=implicit-function-declaration \
                   -Werror=incompatible-pointer-types -Werror=int-conversion
 SECURITY       := -fno-stack-protector -fno-PIE -fno-PIC
 
-CFLAGS         := -m32 -march=i686 -std=gnu99 -ffreestanding $(OPTIMIZATION) $(WARNINGS) $(SECURITY) \
+BASE_CFLAGS    := -m32 -march=i686 -std=gnu99 -ffreestanding $(OPTIMIZATION) $(WARNINGS) $(SECURITY) \
                   -I$(INCDIR) -I. -nostdlib -fno-common -fno-builtin \
                   -fno-omit-frame-pointer -ggdb3
+
+CFLAGS_KERNEL  := $(BASE_CFLAGS) -D_KERNEL
+CFLAGS_USERLAND := $(BASE_CFLAGS)
 
 ASFLAGS        := -f elf32 -F dwarf -g
 LDFLAGS        := -m32 -nostdlib -nostartfiles -T linker.ld -Wl,--gc-sections \
@@ -40,18 +43,26 @@ LDFLAGS        := -m32 -nostdlib -nostartfiles -T linker.ld -Wl,--gc-sections \
 
 QEMU_OPTS      ?= -enable-kvm -m 1024 -serial stdio -vga std
 
-# --- Automatic Source Discovery ---
+# --- Source Discovery ---
 BOOT_SRC       := $(BOOTDIR)/boot.s
 ASM_SRCS       := $(BOOT_SRC) $(wildcard $(ARCHDIR)/*.s)
-KERNEL_SRCS := $(shell find sbin usr lib dev bin kern -name '*.c' 2>/dev/null)
+
+# Kernel C sources: inside kern/ and arch/$(ARCH)/
+KERNEL_SRCS    := $(shell find kern arch/$(ARCH) -name '*.c' 2>/dev/null)
+
+# Userland C sources: everything else under sbin usr lib dev bin excluding kernel src
+USERLAND_SRCS  := $(filter-out $(KERNEL_SRCS), $(shell find sbin usr lib dev bin -name '*.c' 2>/dev/null))
+
 HEADERS        := $(shell find $(INCDIR) -name '*.h' 2>/dev/null) \
                   $(wildcard $(ARCHDIR)/*.h)
 
-# --- Build Artifacts ---
+# --- Object Files ---
 ASM_OBJS       := $(patsubst %.s,$(BUILDDIR)/%.o,$(ASM_SRCS))
-C_OBJS         := $(patsubst %.c,$(BUILDDIR)/%.o,$(KERNEL_SRCS))
-OBJS           := $(ASM_OBJS) $(C_OBJS)
-DEPS           := $(C_OBJS:.o=.d)
+KERNEL_OBJS    := $(patsubst %.c,$(BUILDDIR)/%.o,$(KERNEL_SRCS))
+USERLAND_OBJS  := $(patsubst %.c,$(BUILDDIR)/%.o,$(USERLAND_SRCS))
+
+OBJS           := $(ASM_OBJS) $(KERNEL_OBJS) $(USERLAND_OBJS)
+DEPS           := $(OBJS:.o=.d)
 
 # --- Phony Targets ---
 .PHONY: all clean iso run debug run-nokvm prepare distclean help
@@ -59,31 +70,50 @@ DEPS           := $(C_OBJS:.o=.d)
 # --- Default Target ---
 all: $(BUILDDIR)/$(KERNEL_BIN)
 
-# --- Help Target ---
-help:
-	@echo "Available targets:"
-	@echo "  all       - Build the kernel (default target)"
-	@echo "  clean     - Remove most build artifacts"
-	@echo "  distclean - Remove all build artifacts and ISOs"
-	@echo "  iso       - Create bootable ISO image"
-	@echo "  run       - Run in QEMU with KVM acceleration"
-	@echo "  run-nokvm - Run in QEMU without KVM acceleration"
-	@echo "  debug     - Run in QEMU with GDB server"
-	@echo "  prepare   - Prepare ISO directory structure"
-	@echo "  help      - Show this help message"
-
-# --- Build Rules ---
+# --- Link Kernel ---
 $(BUILDDIR)/$(KERNEL_BIN): $(OBJS) linker.ld | $(BUILDDIR)
 	@echo "[LD] Linking $@"
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) -lgcc
 	@echo "[INFO] Kernel size: $$(stat -c%s $@) bytes"
 
-# --- Pattern Rules ---
-$(BUILDDIR)/%.o: %.c $(HEADERS) | $(BUILDDIR)
+# --- Compile kernel C sources ---
+$(BUILDDIR)/kern/%.o: kern/%.c $(HEADERS) | $(BUILDDIR)
 	@mkdir -p $(@D)
-	@echo "[CC] Compiling $<"
-	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+	@echo "[CC] (kernel) Compiling $<"
+	$(CC) $(CFLAGS_KERNEL) -MMD -MP -c $< -o $@
 
+$(BUILDDIR)/arch/$(ARCH)/%.o: arch/$(ARCH)/%.c $(HEADERS) | $(BUILDDIR)
+	@mkdir -p $(@D)
+	@echo "[CC] (kernel) Compiling $<"
+	$(CC) $(CFLAGS_KERNEL) -MMD -MP -c $< -o $@
+
+# --- Compile userland C sources ---
+$(BUILDDIR)/usr/%.o: usr/%.c $(HEADERS) | $(BUILDDIR)
+	@mkdir -p $(@D)
+	@echo "[CC] (userland) Compiling $<"
+	$(CC) $(CFLAGS_USERLAND) -MMD -MP -c $< -o $@
+
+$(BUILDDIR)/lib/%.o: lib/%.c $(HEADERS) | $(BUILDDIR)
+	@mkdir -p $(@D)
+	@echo "[CC] (userland) Compiling $<"
+	$(CC) $(CFLAGS_USERLAND) -MMD -MP -c $< -o $@
+
+$(BUILDDIR)/sbin/%.o: sbin/%.c $(HEADERS) | $(BUILDDIR)
+	@mkdir -p $(@D)
+	@echo "[CC] (userland) Compiling $<"
+	$(CC) $(CFLAGS_USERLAND) -MMD -MP -c $< -o $@
+
+$(BUILDDIR)/dev/%.o: dev/%.c $(HEADERS) | $(BUILDDIR)
+	@mkdir -p $(@D)
+	@echo "[CC] (userland) Compiling $<"
+	$(CC) $(CFLAGS_USERLAND) -MMD -MP -c $< -o $@
+
+$(BUILDDIR)/bin/%.o: bin/%.c $(HEADERS) | $(BUILDDIR)
+	@mkdir -p $(@D)
+	@echo "[CC] (userland) Compiling $<"
+	$(CC) $(CFLAGS_USERLAND) -MMD -MP -c $< -o $@
+
+# --- Assemble assembly files ---
 $(BUILDDIR)/%.o: %.s | $(BUILDDIR)
 	@mkdir -p $(@D)
 	@echo "[AS] Assembling $<"

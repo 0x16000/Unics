@@ -1,6 +1,7 @@
 #include <paging.h>
 #include <pmm.h>
 #include <string.h>
+#include <sys/types.h>
 #include <machine/atomic.h>
 
 static page_directory_t *kernel_page_directory = NULL;
