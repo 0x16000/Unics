@@ -23,7 +23,28 @@ typedef enum vga_color {
     VGA_COLOR_LIGHT_MAGENTA = 13,
     VGA_COLOR_YELLOW = 14,
     VGA_COLOR_WHITE = 15,
+
+    // Aliases
+    VGA_COLOR_ORANGE = VGA_COLOR_BROWN,
+    VGA_COLOR_PINK = VGA_COLOR_LIGHT_MAGENTA,
+    VGA_COLOR_BRIGHT_YELLOW = VGA_COLOR_YELLOW,
+
+    // Extended conceptual colors (pseudo-colors)
+    VGA_COLOR_BRIGHT_ORANGE = VGA_COLOR_LIGHT_RED,        // Closest approximation
+    VGA_COLOR_BRIGHT_PINK = VGA_COLOR_LIGHT_MAGENTA,      // Alias for light magenta
+    VGA_COLOR_BRIGHT_CYAN = VGA_COLOR_LIGHT_CYAN,
+    VGA_COLOR_BRIGHT_GREEN = VGA_COLOR_LIGHT_GREEN,
+    VGA_COLOR_BRIGHT_BLUE = VGA_COLOR_LIGHT_BLUE,
+
+    // High contrast & special effects
+    VGA_COLOR_BLINK_MASK = 0x80,                          // Bit mask for blinking effect
+
 } vga_color_t;
+
+// Macro to compose attribute byte: fg + bg + blink
+#define VGA_ATTR(fg, bg, blink) \
+    ( ((blink) ? VGA_COLOR_BLINK_MASK : 0) | ((bg & 0x7) << 4) | (fg & 0xF) )
+
 
 // VGA attributes for enhanced functionality
 typedef struct {

@@ -523,9 +523,16 @@ void shell_print_prompt(shell_context_t *ctx) {
         vga_puts("] ");
     }
 
-    vga_puts("root@unics:");
-    vga_puts(cwd);
-    vga_puts(" # ");
+        // Set red foreground for "root"
+        vga_set_color(VGA_COLOR_BRIGHT_ORANGE, VGA_COLOR_BLACK);
+        vga_puts("root");
+
+        // Reset color to normal (white on black)
+        vga_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
+
+        vga_puts("@unics:");
+        vga_puts(cwd);
+        vga_puts(" # ");
 }
 
 // Process input with improved error handling
