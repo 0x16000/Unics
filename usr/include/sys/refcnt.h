@@ -33,7 +33,7 @@ struct refcnt {
 
 #define REFCNT_INITIALIZER()		{ .r_refs = 1, .r_traceidx = 0 }
 
-#ifdef _KERNEL
+/* #ifdef _KERNEL */
 
 void	refcnt_init(struct refcnt *);
 void	refcnt_init_trace(struct refcnt *, int id);
@@ -54,7 +54,7 @@ unsigned int	refcnt_read(struct refcnt *);
 #define DT_REFCNT_IDX_SYNCACHE	7
 #define DT_REFCNT_IDX_TDB	8
 
-#endif /* _KERNEL */
+/* #endif */ /* _KERNEL */
 
 #endif /* _SYS_REFCNT_H_ */
 

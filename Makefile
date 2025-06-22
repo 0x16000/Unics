@@ -87,28 +87,38 @@ $(BUILDDIR)/arch/$(ARCH)/%.o: arch/$(ARCH)/%.c $(HEADERS) | $(BUILDDIR)
 	@echo "[CC] (kernel) Compiling $<"
 	$(CC) $(CFLAGS_KERNEL) -MMD -MP -c $< -o $@
 
-# --- Compile userland C sources ---
-$(BUILDDIR)/usr/%.o: usr/%.c $(HEADERS) | $(BUILDDIR)
+# --- Compile sbin/init/init.c as kernel (special case) ---
+$(BUILDDIR)/sbin/init:
+	@mkdir -p $@
+
+$(BUILDDIR)/sbin/init/init.o: sbin/init/init.c $(HEADERS) | $(BUILDDIR)/sbin/init
+	@echo "[CC] (kernel) Compiling $<"
+	$(CC) $(CFLAGS_KERNEL) -MMD -MP -c $< -o $@
+
+# --- Compile other sbin userland C sources (excluding sbin/init/init.c) ---
+$(BUILDDIR)/sbin/%.o: sbin/%.c $(HEADERS) | $(BUILDDIR)/sbin
+	if [ "$<" != "sbin/init/init.c" ]; then \
+		echo "[CC] (userland) Compiling $<"; \
+		$(CC) $(CFLAGS_USERLAND) -MMD -MP -c $< -o $@; \
+	fi
+
+# --- Compile userland C sources (usr, lib, dev, bin) ---
+$(BUILDDIR)/usr/%.o: usr/%.c $(HEADERS) | $(BUILDDIR)/usr
 	@mkdir -p $(@D)
 	@echo "[CC] (userland) Compiling $<"
 	$(CC) $(CFLAGS_USERLAND) -MMD -MP -c $< -o $@
 
-$(BUILDDIR)/lib/%.o: lib/%.c $(HEADERS) | $(BUILDDIR)
+$(BUILDDIR)/lib/%.o: lib/%.c $(HEADERS) | $(BUILDDIR)/lib
 	@mkdir -p $(@D)
 	@echo "[CC] (userland) Compiling $<"
 	$(CC) $(CFLAGS_USERLAND) -MMD -MP -c $< -o $@
 
-$(BUILDDIR)/sbin/%.o: sbin/%.c $(HEADERS) | $(BUILDDIR)
+$(BUILDDIR)/dev/%.o: dev/%.c $(HEADERS) | $(BUILDDIR)/dev
 	@mkdir -p $(@D)
 	@echo "[CC] (userland) Compiling $<"
 	$(CC) $(CFLAGS_USERLAND) -MMD -MP -c $< -o $@
 
-$(BUILDDIR)/dev/%.o: dev/%.c $(HEADERS) | $(BUILDDIR)
-	@mkdir -p $(@D)
-	@echo "[CC] (userland) Compiling $<"
-	$(CC) $(CFLAGS_USERLAND) -MMD -MP -c $< -o $@
-
-$(BUILDDIR)/bin/%.o: bin/%.c $(HEADERS) | $(BUILDDIR)
+$(BUILDDIR)/bin/%.o: bin/%.c $(HEADERS) | $(BUILDDIR)/bin
 	@mkdir -p $(@D)
 	@echo "[CC] (userland) Compiling $<"
 	$(CC) $(CFLAGS_USERLAND) -MMD -MP -c $< -o $@
@@ -121,6 +131,30 @@ $(BUILDDIR)/%.o: %.s | $(BUILDDIR)
 
 # --- Directory Creation ---
 $(BUILDDIR):
+	@mkdir -p $@
+
+$(BUILDDIR)/sbin:
+	@mkdir -p $@
+
+$(BUILDDIR)/usr:
+	@mkdir -p $@
+
+$(BUILDDIR)/lib:
+	@mkdir -p $@
+
+$(BUILDDIR)/dev:
+	@mkdir -p $@
+
+$(BUILDDIR)/bin:
+	@mkdir -p $@
+
+$(BUILDDIR)/arch:
+	@mkdir -p $@
+
+$(BUILDDIR)/arch/$(ARCH):
+	@mkdir -p $@
+
+$(BUILDDIR)/kern:
 	@mkdir -p $@
 
 # --- ISO Preparation ---

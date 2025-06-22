@@ -16,6 +16,7 @@
 #include <paging.h>
 #include <sys/null.h>
 #include <sys/refcnt.h>
+#include <sys/srp.h>
 
 extern shell_command_t shell_commands[];
 extern size_t shell_commands_count;
@@ -30,6 +31,7 @@ extern uint32_t multiboot_info_ptr;
 extern uint32_t __bitmap_start;
 
 struct refcnt ss_refcnt;
+static struct srp ss_srp;
 
 void early_cpu_init(void);
 
@@ -102,6 +104,9 @@ int main(void) {
 
     // Refcnt init
     refcnt_init(&ss_refcnt);
+
+    // Srp init
+    srp_init(&ss_srp);
 
     // Initialize virtual memory
     vmm_init();
