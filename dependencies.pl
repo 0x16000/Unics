@@ -4,7 +4,7 @@
 #                                                         #
 #               UNICS DEPENDENCIES INSTALLER              #
 #                                                         #
-#                  Version 1.1 - 2025                     #
+#                  Version 1.2 - 2025                     #
 #                                                         #
 ###########################################################
 
@@ -20,26 +20,50 @@ my $YELLOW = "\033[1;33m";
 my $BLUE = "\033[0;34m";
 my $NC = "\033[0m"; # No Color
 
-# Dependencies for each distro
-my %ARCH_DEPS = (
-    nasm => "nasm",
-    xorriso => "xorriso",
-    qemu => "qemu-system-x86",
-    gcc_multilib => "gcc-multilib"
-);
-
-my %UBUNTU_DEPS = (
-    nasm => "nasm",
-    xorriso => "xorriso",
-    qemu => "qemu-system",
-    gcc_multilib => "gcc-multilib"
-);
-
-my %FEDORA_DEPS = (
-    nasm => "nasm",
-    xorriso => "xorriso",
-    qemu => "qemu-system-x86",
-    gcc_multilib => "glibc-devel.i686"  # Fedora equivalent for multilib dev
+# Complete dependency lists for each distro
+my %DEPS = (
+    arch => {
+        base => "base-devel",
+        tools => "nasm xorriso grub",
+        qemu => "qemu-system-x86",
+        multilib => "lib32-glibc lib32-gcc-libs",
+        extras => "mtools"
+    },
+    ubuntu => {
+        base => "build-essential",
+        tools => "nasm xorriso grub-pc-bin",
+        qemu => "qemu-system-x86",
+        multilib => "gcc-multilib libc6-dev-i386",
+        extras => "mtools"
+    },
+    debian => {
+        base => "build-essential",
+        tools => "nasm xorriso grub-pc-bin",
+        qemu => "qemu-system-x86",
+        multilib => "gcc-multilib libc6-dev-i386",
+        extras => "mtools"
+    },
+    fedora => {
+        base => "gcc make automake",
+        tools => "nasm xorriso grub2-tools",
+        qemu => "qemu-system-x86",
+        multilib => "glibc-devel.i686 libstdc++-devel.i686",
+        extras => "mtools"
+    },
+    centos => {
+        base => "gcc make automake",
+        tools => "nasm xorriso grub2-tools",
+        qemu => "qemu-system-x86",
+        multilib => "glibc-devel.i686 libstdc++-devel.i686",
+        extras => "mtools"
+    },
+    linuxmint => {
+        base => "build-essential",
+        tools => "nasm xorriso grub-pc-bin",
+        qemu => "qemu-system-x86",
+        multilib => "gcc-multilib libc6-dev-i386",
+        extras => "mtools"
+    }
 );
 
 # Function to display error messages
@@ -68,140 +92,158 @@ sub command_exists {
     return system("command -v $cmd >/dev/null 2>&1") == 0;
 }
 
-# Function to install dependencies for Arch
-sub install_arch {
-    info("Updating pacman and installing dependencies for Arch...");
-    if (system("sudo pacman -Syu --noconfirm") != 0) {
-        error("Failed to update system packages");
-        return 0;
-    }
-
-    foreach my $pkg (values %ARCH_DEPS) {
-        if (system("sudo pacman -S --noconfirm $pkg") != 0) {
-            error("Failed to install $pkg");
-            return 0;
+# Function to detect Linux distribution
+# Function to detect Linux distribution
+sub detect_distro {
+    if (-e "/etc/os-release") {
+        open my $fh, '<', '/etc/os-release' or return undef;
+        while (my $line = <$fh>) {
+            if ($line =~ /^ID=(.+)/) {
+                my $id = $1;
+                $id =~ s/"//g;
+                $id = lc($id);
+                # Normalize mint/linuxmint
+                $id = "linuxmint" if $id eq "mint";
+                return $id;
+            }
         }
+        close $fh;
     }
-    return 1;
+    
+    # Fallback detection methods
+    if (command_exists("pacman")) { return "arch"; }
+    if (command_exists("apt"))    { return "ubuntu"; }
+    if (command_exists("dnf"))    { return "fedora"; }
+    if (command_exists("yum"))    { return "centos"; }
+    
+    return undef;
 }
 
-# Function to install dependencies for Ubuntu
-sub install_ubuntu {
-    info("Updating apt and installing dependencies for Ubuntu...");
-    if (system("sudo apt update -y") != 0) {
-        error("Failed to update package lists");
-        return 0;
-    }
-
-    foreach my $pkg (values %UBUNTU_DEPS) {
-        if (system("sudo apt install -y $pkg") != 0) {
-            error("Failed to install $pkg");
-            return 0;
-        }
-    }
-    return 1;
-}
-
-# Function to install dependencies for Fedora
-sub install_fedora {
-    info("Updating dnf and installing dependencies for Fedora...");
-    if (system("sudo dnf -y update") != 0) {
-        error("Failed to update system packages");
-        return 0;
-    }
-
-    foreach my $pkg (values %FEDORA_DEPS) {
-        if (system("sudo dnf -y install $pkg") != 0) {
-            error("Failed to install $pkg");
-            return 0;
-        }
-    }
-    return 1;
-}
-
-# Main installation function
-sub install_dependencies {
-    my $distro = lc(shift);
-
-    if ($distro eq 'arch') {
-        return install_arch();
-    }
-    elsif ($distro eq 'ubuntu') {
-        return install_ubuntu();
-    }
-    elsif ($distro eq 'fedora') {
-        return install_fedora();
-    }
-    else {
+# Function to install dependencies for a distro
+sub install_deps {
+    my $distro = shift;
+    
+    unless (exists $DEPS{$distro}) {
         error("Unsupported distribution: $distro");
         return 0;
     }
-}
-
-# Verify sudo privileges
-sub check_sudo {
-    if (system("sudo -v") != 0) {
-        error("You need sudo privileges to run this script");
-        exit(1);
+    
+    my $pkg_cmd = $distro eq 'arch' ? 'pacman -S --noconfirm' :
+                  $distro =~ /(ubuntu|debian|linuxmint)/ ? 'apt install -y' :
+                  $distro =~ /(fedora|centos)/ ? 'dnf install -y' :
+                  undef;
+    
+    unless ($pkg_cmd) {
+        error("No package manager command for $distro");
+        return 0;
     }
-}
-
-# Main execution
-sub main {
-    print "\n${BLUE}UNICS Dependencies Installer${NC}\n\n";
-
-    # Prompt for installation confirmation
-    print "Do you want to install the dependencies? (yes/no) ";
-    my $answer = <STDIN>;
-    chomp $answer;
-
-    unless ($answer =~ /^y(es)?$/i) {
-        info("Installation cancelled by user.");
-        exit(0);
-    }
-
-    # Detect distribution if not provided
-    my $detected_distro = "";
-    if (command_exists("pacman")) {
-        $detected_distro = "arch";
-    }
-    elsif (command_exists("apt")) {
-        $detected_distro = "ubuntu";
-    }
-    elsif (command_exists("dnf")) {
-        $detected_distro = "fedora";
-    }
-
-    my $distro;
-    # Prompt for distribution selection
-    if ($detected_distro) {
-        print "Detected \u$detected_distro. Is this correct? (yes/no) ";
-        my $confirm = <STDIN>;
-        chomp $confirm;
-
-        if ($confirm =~ /^y(es)?$/i) {
-            $distro = $detected_distro;
+    
+    # Update package lists first
+    info("Updating package databases...");
+    my $update_cmd = $distro eq 'arch' ? 'pacman -Syu --noconfirm' :
+                     $distro =~ /(ubuntu|debian|linuxmint)/ ? 'apt update -y' :
+                     $distro =~ /(fedora|centos)/ ? 'dnf update -y' :
+                     undef;
+    
+    system("sudo $update_cmd") == 0 or do {
+        error("Failed to update packages");
+        return 0;
+    };
+    
+    # Install packages in groups
+    my @groups = qw(base tools qemu multilib extras);
+    foreach my $group (@groups) {
+        next unless $DEPS{$distro}{$group};
+        
+        info("Installing $group packages...");
+        if (system("sudo $pkg_cmd $DEPS{$distro}{$group}") != 0) {
+            error("Failed to install $group packages");
+            return 0;
         }
     }
+    
+    return 1;
+}
 
+# Verify all required tools are installed
+sub verify_installation {
+    my @required_tools = qw(gcc nasm ld objcopy grub-mkrescue qemu-system-x86_64);
+    my $all_ok = 1;
+    
+    info("Verifying installation...");
+    
+    foreach my $tool (@required_tools) {
+        if (command_exists($tool)) {
+            success("$tool found");
+        } else {
+            error("$tool not found in PATH");
+            $all_ok = 0;
+        }
+    }
+    
+    # Check 32-bit support
+    if (system("gcc -m32 -print-libgcc-file-name >/dev/null 2>&1") == 0) {
+        success("32-bit compilation support available");
+    } else {
+        error("32-bit compilation not supported");
+        $all_ok = 0;
+    }
+    
+    return $all_ok;
+}
+
+# Main installation function
+sub main {
+    print "\n${BLUE}UNICS OS Development Environment Setup${NC}\n";
+    print "${BLUE}=====================================${NC}\n\n";
+    
+    # Detect distribution
+    my $distro = detect_distro();
     unless ($distro) {
-        print "Which distro are you using? (arch/ubuntu/fedora) ";
-        $distro = <STDIN>;
-        chomp $distro;
+        error("Unable to detect Linux distribution");
+        exit(1);
     }
-
-    # Check sudo before proceeding
-    check_sudo();
-
+    
+    info("Detected distribution: \u$distro");
+    
+    # Check if running as root
+    if ($< == 0) {
+        warning("Running as root is not recommended. Use sudo instead.");
+    }
+    
+    # Confirm installation
+    print "Proceed with dependency installation? [y/N] ";
+    my $answer = <STDIN>;
+    chomp $answer;
+    
+    unless ($answer =~ /^y(es)?$/i) {
+        info("Installation cancelled");
+        exit(0);
+    }
+    
+    # Check sudo privileges
+    unless ($< == 0 || command_exists("sudo")) {
+        error("sudo is required but not available");
+        exit(1);
+    }
+    
     # Install dependencies
-    if (install_dependencies(lc($distro))) {
-        success("All dependencies installed successfully!");
-    }
-    else {
-        error("Failed to install all dependencies");
+    if (install_deps($distro)) {
+        if (verify_installation()) {
+            success("\nAll dependencies installed successfully!");
+            print "\nYou can now compile Unics OS with:\n";
+            print "  make clean\n";
+            print "  make all\n";
+        } else {
+            error("\nInstallation completed but some components are missing");
+            print "\nYou may need to manually install missing components\n";
+            exit(1);
+        }
+    } else {
+        error("Failed to install dependencies");
         exit(1);
     }
 }
 
-# Run main function
+# Execute main function
 main();
