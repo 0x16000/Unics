@@ -43,7 +43,7 @@ QEMU_OPTS      ?= -enable-kvm -m 1024 -serial stdio -vga std
 # --- Automatic Source Discovery ---
 BOOT_SRC       := $(BOOTDIR)/boot.s
 ASM_SRCS       := $(BOOT_SRC) $(wildcard $(ARCHDIR)/*.s)
-KERNEL_SRCS    := $(shell find sbin usr lib dev bin -name '*.c' 2>/dev/null)
+KERNEL_SRCS := $(shell find sbin usr lib dev bin kern -name '*.c' 2>/dev/null)
 HEADERS        := $(shell find $(INCDIR) -name '*.h' 2>/dev/null) \
                   $(wildcard $(ARCHDIR)/*.h)
 
