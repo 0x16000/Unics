@@ -59,6 +59,6 @@ make run
 
 ## Contribute
 We gladly accept contributors to the Unics kernel and grow our community.
-For now please ONLY write in C, assembly only if it is software that cannot be written in C.
+For now please ONLY write in C / C++, assembly only if it is software that cannot be written in C / C++.
 
 Thank you for choosing Unics First Edition. Have a nice day.
