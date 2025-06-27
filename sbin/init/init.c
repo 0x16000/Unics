@@ -17,6 +17,7 @@
 #include <sys/null.h>
 #include <sys/refcnt.h>
 #include <sys/srp.h>
+#include <hdmi.h>
 
 extern shell_command_t shell_commands[];
 extern size_t shell_commands_count;
@@ -55,11 +56,38 @@ int main(void) {
     vga_puts("CPU: i686-class processor\n");
     delay(50000);
     
+    // Initialize HDMI
+    vga_puts("\nInitializing display controllers:\n");
+    vga_puts("vga0: <Generic VGA> at port 0x3c0-0x3df iomem 0xa0000-0xbffff\n");
+    delay(50000);
+    
+    vga_puts("hdmi0: <Broadcom HDMI Controller> at iomem 0xfe902000\n");
+    hdmi_device_t hdmi;
+    if (hdmi_init(&hdmi, HDMI_BASE_ADDR) == 0) {
+        // Configure default settings
+        hdmi_set_resolution(&hdmi, HDMI_RES_1920x1080_60Hz);
+        hdmi_set_color_depth(&hdmi, HDMI_COLOR_DEPTH_8BIT);
+        
+        // Enable HDMI output
+        hdmi_enable(&hdmi, true);
+        hdmi_enable_video(&hdmi, true);
+        
+        // Check connection status
+        if (hdmi_is_connected(&hdmi)) {
+            vga_puts("hdmi0: connected (1920x1080@60Hz)\n");
+        } else {
+            vga_puts("hdmi0: no display connected\n");
+        }
+    } else {
+        vga_puts("hdmi0: initialization failed (fallback to VGA)\n");
+    }
+    delay(100000);
+    
     vga_puts("\n");
 
     // Initialize paging
     paging_init();
-    vga_puts("Paging: initalization\n\n");
+    vga_puts("Paging: initialization complete\n\n");
     delay(50000);
     
     // Device probing messages
@@ -67,9 +95,6 @@ int main(void) {
     delay(100000);
     
     vga_puts("kbd0 at atkbdc0 (kbd port)\n");
-    delay(100000);
-    
-    vga_puts("vga0: <Generic VGA> at port 0x3c0-0x3df iomem 0xa0000-0xbffff\n");
     delay(100000);
     
     vga_puts("sc0: <System console> at flags 0x100 on isa0\n");
@@ -85,20 +110,17 @@ int main(void) {
     delay(100000);
     
     // Initialize Filesystem
-    fs_init(); // initialize the global root_fs and current_dir
-
-    // Use &root_fs as the fs pointer for file operations
-    fs_mkdir("root"); // create directory "root"
-    fs_create("README"); // create file "README"
-    fs_open(&root_fs, "README"); // open README for writing
+    fs_init();
+    fs_mkdir("root");
+    fs_create("README");
+    fs_open(&root_fs, "README");
 
     const char *text = "Welcome to Unics and thank you for choosing it!\n"
     "First edition Unics is the first version of this kernel / operating system.\n"
     "As said before for a list of commands run the 'help' command.\n"
     "Thank you, have a nice day.\n";
-    fs_write(&root_fs, "README", text, strlen(text)); // write to README
-
-    fs_close(&root_fs, "README"); // close file when done
+    fs_write(&root_fs, "README", text, strlen(text));
+    fs_close(&root_fs, "README");
 
     delay(100000);
 
@@ -116,13 +138,13 @@ int main(void) {
     // Initialize physical memory manager
     pmm_init();
 
-    // Add memory regions (adjust based on your system's memory layout)
-    pmm_add_region(0x00100000, 0x07F00000, PMM_ZONE_NORMAL); // 1MB-128MB normal memory
-    pmm_add_region(0x00100000, 0x00F00000, PMM_ZONE_DMA);    // 1MB-16MB DMA zone
+    // Add memory regions
+    pmm_add_region(0x00100000, 0x07F00000, PMM_ZONE_NORMAL);
+    pmm_add_region(0x00100000, 0x00F00000, PMM_ZONE_DMA);
 
-    // Reserve low memory (0-1MB) and kernel area
-    pmm_reserve_range(0x00000000, 0x00100000); // Reserve 0-1MB
-    pmm_reserve_range(0x00100000, 0x00200000); // Reserve kernel (1MB-2MB)
+    // Reserve low memory and kernel area
+    pmm_reserve_range(0x00000000, 0x00100000);
+    pmm_reserve_range(0x00100000, 0x00200000);
 
     vga_puts("pmm: Physical memory initialized\n");
     delay(50000);
@@ -184,7 +206,6 @@ void early_cpu_init(void) {
     cpu_detect_features(&features);
     
     vga_puts("cpu0: features=0x");
-    // Print hex representation of features (you'll need to implement this)
     vga_puts("1bf<FPU,VME,DE,PSE,TSC,MSR,PAE,MCE>\n");
     delay(100000);
     

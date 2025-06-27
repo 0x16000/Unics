@@ -34,6 +34,8 @@
 #ifndef _MACHINE_PIO_H_
 #define _MACHINE_PIO_H_
 
+#include <sys/types.h>
+
 /*
  * Functions to provide access to i386 programmed I/O instructions.
  *
