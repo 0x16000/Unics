@@ -36,6 +36,8 @@
 #ifndef _MACHINE_ATOMIC_H_
 #define _MACHINE_ATOMIC_H_
 
+#include <sys/types.h>
+
 /*
  * Perform atomic operations on memory. Should be atomic with respect
  * to interrupts and multiple processors.
