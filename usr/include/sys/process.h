@@ -1,5 +1,5 @@
-#ifndef PROCESS_H
-#define PROCESS_H
+#ifndef SYS_PROCESS_H
+#define SYS_PROCESS_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -9,6 +9,7 @@
 #define MAX_PROCESS_NAME 32
 
 typedef enum {
+    PROCESS_UNUSED = -1,
     PROCESS_RUNNING,
     PROCESS_SLEEPING,
     PROCESS_STOPPED,
@@ -19,7 +20,7 @@ typedef struct {
     int pid;
     char name[MAX_PROCESS_NAME];
     ProcessState state;
-    int ppid;  // Parent PID
+    int ppid;  // Parent process ID
     bool used;
 } Process;
 
@@ -29,7 +30,10 @@ extern Process process_table[MAX_PROCESSES];
 void process_init(void);
 int process_create(const char *name, int ppid);
 int process_kill(int pid);
+int process_cleanup(int pid);
 Process *process_get(int pid);
+int process_find(const char *name);
+int process_count(void);
 void process_list(void);
 
-#endif // PROCESS_H
+#endif // SYS_PROCESS_H

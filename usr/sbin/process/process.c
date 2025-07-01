@@ -1,79 +1,51 @@
 #include <string.h>
 #include <stdio.h>
-#include <sys/process.h>
 #include <stdatomic.h>
+#include <sys/process.h>
 
-/* Process table (declared in header as extern) */
 Process process_table[MAX_PROCESSES];
-
-/* Atomic PID counter to ensure unique PIDs across threads */
 static atomic_int next_pid = 100;
 
-/* Initialize the process table */
 void process_init(void) {
     for (int i = 0; i < MAX_PROCESSES; i++) {
         process_table[i].used = false;
+        process_table[i].state = PROCESS_UNUSED;
     }
 }
 
-/**
- * Create a new process entry
- * @param name Process name (will be truncated if too long)
- * @param ppid Parent process ID
- * @return PID of new process or -1 on error
- */
 int process_create(const char *name, int ppid) {
-    if (!name || ppid < 0) {
+    if (!name || ppid < 0)
         return -1;
-    }
 
     for (int i = 0; i < MAX_PROCESSES; i++) {
         if (!process_table[i].used) {
             Process *p = &process_table[i];
-            
+
             p->pid = atomic_fetch_add(&next_pid, 1);
             strncpy(p->name, name, MAX_PROCESS_NAME - 1);
             p->name[MAX_PROCESS_NAME - 1] = '\0';
             p->state = PROCESS_RUNNING;
             p->ppid = ppid;
             p->used = true;
-            
+
             return p->pid;
         }
     }
-    
-    return -1; /* No free slots */
+    return -1;
 }
 
-/**
- * Terminate a process
- * @param pid Process ID to terminate
- * @return 0 on success, -1 if process not found
- */
 int process_kill(int pid) {
     if (pid < 0) return -1;
 
     for (int i = 0; i < MAX_PROCESSES; i++) {
         if (process_table[i].used && process_table[i].pid == pid) {
-            Process *p = &process_table[i];
-            
-            /* Mark as zombie first to allow parent to check status */
-            p->state = PROCESS_ZOMBIE;
-            
-            /* Parent notification would go here */
-            
+            process_table[i].state = PROCESS_ZOMBIE;
             return 0;
         }
     }
-    
     return -1;
 }
 
-/**
- * Clean up a zombie process (to be called by parent)
- * @param pid Process ID to clean up
- * @return 0 on success, -1 if process not found or not a zombie
- */
 int process_cleanup(int pid) {
     if (pid < 0) return -1;
 
@@ -82,18 +54,13 @@ int process_cleanup(int pid) {
         if (p->used && p->pid == pid && p->state == PROCESS_ZOMBIE) {
             memset(p, 0, sizeof(Process));
             p->used = false;
+            p->state = PROCESS_UNUSED;
             return 0;
         }
     }
-    
     return -1;
 }
 
-/**
- * Get process information
- * @param pid Process ID to look up
- * @return Pointer to Process structure or NULL if not found
- */
 Process *process_get(int pid) {
     if (pid < 0) return NULL;
 
@@ -102,39 +69,9 @@ Process *process_get(int pid) {
             return &process_table[i];
         }
     }
-    
     return NULL;
 }
 
-/**
- * List all active processes
- */
-void process_list(void) {
-    printf("%-5s %-5s %-9s %s\n", "PID", "PPID", "STATE", "CMD");
-    
-    for (int i = 0; i < MAX_PROCESSES; i++) {
-        if (process_table[i].used) {
-            Process *p = &process_table[i];
-            
-            const char *state_str = "UNKNOWN";
-            switch (p->state) {
-                case PROCESS_RUNNING:  state_str = "RUNNING"; break;
-                case PROCESS_SLEEPING: state_str = "SLEEPING"; break;
-                case PROCESS_STOPPED:  state_str = "STOPPED"; break;
-                case PROCESS_ZOMBIE:   state_str = "ZOMBIE"; break;
-            }
-            
-            printf("%-5d %-5d %-9s %s\n", 
-                   p->pid, p->ppid, state_str, p->name);
-        }
-    }
-}
-
-/**
- * Find process by name
- * @param name Process name to search for
- * @return PID of first matching process or -1 if not found
- */
 int process_find(const char *name) {
     if (!name) return -1;
 
@@ -143,6 +80,36 @@ int process_find(const char *name) {
             return process_table[i].pid;
         }
     }
-    
     return -1;
+}
+
+int process_count(void) {
+    int count = 0;
+    for (int i = 0; i < MAX_PROCESSES; i++) {
+        if (process_table[i].used)
+            count++;
+    }
+    return count;
+}
+
+static const char *state_to_string(ProcessState state) {
+    switch (state) {
+        case PROCESS_RUNNING:  return "RUNNING";
+        case PROCESS_SLEEPING: return "SLEEPING";
+        case PROCESS_STOPPED:  return "STOPPED";
+        case PROCESS_ZOMBIE:   return "ZOMBIE";
+        default:               return "UNUSED";
+    }
+}
+
+void process_list(void) {
+    printf("%-5s %-5s %-9s %s\n", "PID", "PPID", "STATE", "CMD");
+
+    for (int i = 0; i < MAX_PROCESSES; i++) {
+        if (process_table[i].used) {
+            Process *p = &process_table[i];
+            printf("%-5d %-5d %-9s %s\n",
+                   p->pid, p->ppid, state_to_string(p->state), p->name);
+        }
+    }
 }
