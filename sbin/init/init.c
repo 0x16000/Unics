@@ -40,27 +40,17 @@ static struct srp ss_srp;
 
 void early_cpu_init(void);
 
-int main(void) {
-    // Initialize basic I/O
-    vga_initialize();
-    vga_disable_cursor();
-    vga_clear();
-    vga_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
-
-    // Boot banner
+static void print_banner_and_hardware(void) {
     vga_printf("Unics/i686 0.1-RELEASE #0: %s\n", __DATE__);
-    vga_puts("Copyright (c) 2025 0x16000. All rights reserved.\n\n");
-    delay(MEDIUM_DELAY);
+    vga_puts(
+        "Copyright (c) 2025 0x16000. All rights reserved.\n\n"
+        "CPU: i686-class processor\n\n"
+        "Initializing display controllers:\n"
+        "vga0: <Generic VGA> at port 0x3c0-0x3df iomem 0xa0000-0xbffff\n"
+    );
+}
 
-    // Hardware identification
-    vga_puts("CPU: i686-class processor\n");
-    delay(SHORT_DELAY);
-
-    // Display setup
-    vga_puts("\nInitializing display controllers:\n");
-    vga_puts("vga0: <Generic VGA> at port 0x3c0-0x3df iomem 0xa0000-0xbffff\n");
-    delay(SHORT_DELAY);
-
+static void setup_hdmi(void) {
     vga_puts("hdmi0: <Broadcom HDMI Controller> at iomem 0xfe902000\n");
     hdmi_device_t hdmi;
     if (hdmi_init(&hdmi, HDMI_BASE_ADDR) == 0) {
@@ -74,26 +64,47 @@ int main(void) {
     } else {
         vga_puts("hdmi0: initialization failed (fallback to VGA)\n");
     }
-    delay(MEDIUM_DELAY);
     vga_puts("\n");
+}
 
-    // Memory management
+static void print_device_and_memory_info(void) {
+    vga_puts(
+        "Paging: initialization complete\n\n"
+        "Probing devices:\n"
+        "kbd0 at atkbdc0 (kbd port)\n"
+        "sc0: <System console> at flags 0x100 on isa0\n\n"
+    );
+}
+
+static void print_root_fs_readme(void) {
+    const char *text =
+        "Welcome to Unics and thank you for choosing it!\n"
+        "First edition Unics is the first version of this kernel / operating system.\n"
+        "As said before, for a list of commands run the 'help' command.\n"
+        "Thank you, have a nice day.\n";
+    fs_write(&root_fs, "README", text, strlen(text));
+}
+
+int main(void) {
+    vga_initialize();
+    vga_disable_cursor();
+    vga_clear();
+    vga_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
+
+    print_banner_and_hardware();
+    delay(MEDIUM_DELAY);
+
+    setup_hdmi();
+    delay(MEDIUM_DELAY);
+
     paging_init();
-    vga_puts("Paging: initialization complete\n\n");
     delay(SHORT_DELAY);
 
-    // Device messages
-    vga_puts("Probing devices:\n");
-    delay(SHORT_DELAY);
-    vga_puts("kbd0 at atkbdc0 (kbd port)\n");
-    delay(SHORT_DELAY);
-    vga_puts("sc0: <System console> at flags 0x100 on isa0\n\n");
+    print_device_and_memory_info();
     delay(SHORT_DELAY);
 
-    // CPU & hardware initialization
     early_cpu_init();
 
-    // Filesystem setup
     vga_puts("Mounting root from RAM\n");
     delay(SHORT_DELAY);
 
@@ -101,16 +112,10 @@ int main(void) {
     fs_mkdir("root");
     fs_create("README");
     fs_open(&root_fs, "README");
-    const char *text =
-        "Welcome to Unics and thank you for choosing it!\n"
-        "First edition Unics is the first version of this kernel / operating system.\n"
-        "As said before, for a list of commands run the 'help' command.\n"
-        "Thank you, have a nice day.\n";
-    fs_write(&root_fs, "README", text, strlen(text));
+    print_root_fs_readme();
     fs_close(&root_fs, "README");
     delay(SHORT_DELAY);
 
-    // Memory & resource managers
     refcnt_init(&ss_refcnt);
     srp_init(&ss_srp);
     vmm_init();
@@ -129,17 +134,14 @@ int main(void) {
     vga_puts("null: dev/null/ initialized\n");
     delay(SHORT_DELAY);
 
-    // Process subsystem
     process_init();
     process_create("init", 0);
     process_create("shell", 1);
 
-    // Keyboard driver
     kb_init();
     kb_enable_input(true);
     kb_set_boot_complete(true);
 
-    // Final system messages
     vga_puts("Kernel initialization complete.\n\n");
     delay(MEDIUM_DELAY);
 
@@ -147,19 +149,20 @@ int main(void) {
     delay(LONG_DELAY);
     vga_puts("Starting init process\n\n");
     delay(MEDIUM_DELAY);
+
     vga_enable_cursor();
 
-    // Login and welcome
     login_prompt();
 
-    vga_puts("\nUnics/i686 0.1-RELEASE (GENERIC)\n\n");
-    vga_puts("Welcome to Unics!\n\n");
-    vga_puts("This software is provided \"as is\" without any express or\n");
-    vga_puts("implied warranties, including, without limitation, the implied\n");
-    vga_puts("warranties of merchantability and fitness for a particular purpose.\n\n");
-    vga_puts("Report bugs on GitHub by opening an issue or pull request.\n\n");
+    vga_puts(
+        "\nUnics/i686 0.1-RELEASE (GENERIC)\n\n"
+        "Welcome to Unics!\n\n"
+        "This software is provided \"as is\" without any express or\n"
+        "implied warranties, including, without limitation, the implied\n"
+        "warranties of merchantability and fitness for a particular purpose.\n\n"
+        "Report bugs on GitHub by opening an issue or pull request.\n\n"
+    );
 
-    // Launch shell
     shell_context_t shell_ctx;
     shell_init(&shell_ctx, shell_commands, shell_commands_count);
     shell_run(&shell_ctx);
@@ -171,7 +174,26 @@ void early_cpu_init(void) {
     cpu_features_t features;
     cpu_detect_features(&features);
 
-    vga_puts("cpu0: features=0x1bf <FPU,VME,DE,PSE,TSC,MSR,PAE,MCE>\n");
+    uint32_t feature_bits = 0;
+    feature_bits |= features.fpu ? (1 << 0) : 0;
+    feature_bits |= features.vme ? (1 << 1) : 0;
+    feature_bits |= features.de  ? (1 << 2) : 0;
+    feature_bits |= features.pse ? (1 << 3) : 0;
+    feature_bits |= features.tsc ? (1 << 4) : 0;
+    feature_bits |= features.msr ? (1 << 5) : 0;
+    feature_bits |= features.pae ? (1 << 6) : 0;
+    feature_bits |= features.mce ? (1 << 7) : 0;
+
+    vga_printf("cpu0: features=0x%x <%s%s%s%s%s%s%s%s>\n",
+           feature_bits,
+           features.fpu ? "FPU," : "",
+           features.vme ? "VME," : "",
+           features.de  ? "DE,"  : "",
+           features.pse ? "PSE," : "",
+           features.tsc ? "TSC," : "",
+           features.msr ? "MSR," : "",
+           features.pae ? "PAE," : "",
+           features.mce ? "MCE"  : "");
     delay(MEDIUM_DELAY);
 
     cpu_init_fpu();

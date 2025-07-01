@@ -12,6 +12,19 @@ static uint64_t fs_get_time(void) {
     return (uint64_t)time(NULL);
 }
 
+static size_t fs_find_free_slot(void) {
+    for (size_t i = 0; i < MAX_FILES; i++) {
+        if (root_fs.free_list[i]) {
+            return i;
+        }
+    }
+    return MAX_FILES;
+}
+
+static inline bool fs_has_perm(File *file, uint8_t perm) {
+    return (file->permissions & perm) == perm;
+}
+
 void fs_init(void) {
     memset(&root_fs, 0, sizeof(FileSystem));
     root_fs.file_count = 0;
@@ -116,55 +129,36 @@ int fs_resize_file(File *file, size_t new_size) {
 }
 
 int fs_create_with_perms(const char *filename, uint8_t permissions) {
-    int validation_result = fs_validate_filename(filename);
-    if (validation_result != FS_SUCCESS) {
-        return validation_result;
-    }
+    int res = fs_validate_filename(filename);
+    if (res != FS_SUCCESS) return res;
 
-    // Check if file already exists
-    if (fs_find_file(filename) != NULL) {
-        return FS_ERR_EXISTS;
-    }
+    if (fs_find_file(filename)) return FS_ERR_EXISTS;
 
-    // Find free slot
-    size_t free_slot = MAX_FILES;
-    for (size_t i = 0; i < MAX_FILES; i++) {
-        if (root_fs.free_list[i]) {
-            free_slot = i;
-            break;
-        }
-    }
-    
-    if (free_slot == MAX_FILES) {
-        return FS_ERR_FULL;
-    }
+    size_t slot = fs_find_free_slot();
+    if (slot == MAX_FILES) return FS_ERR_FULL;
 
-    // Allocate new file
-    File *new_file = &root_fs.files[free_slot];
-    root_fs.free_list[free_slot] = false;
-    
-    // Initialize file
-    strncpy(new_file->name, filename, MAX_FILENAME_LEN - 1);
-    new_file->name[MAX_FILENAME_LEN - 1] = '\0';
+    File *file = &root_fs.files[slot];
+    root_fs.free_list[slot] = false;
 
-    // Allocate initial data block
-    new_file->allocated_size = FS_BLOCK_SIZE;
-    new_file->data = malloc(new_file->allocated_size);
-    if (!new_file->data) {
-        root_fs.free_list[free_slot] = true;
+    strncpy(file->name, filename, MAX_FILENAME_LEN - 1);
+    file->name[MAX_FILENAME_LEN - 1] = '\0';
+
+    file->allocated_size = FS_BLOCK_SIZE;
+    file->data = malloc(file->allocated_size);
+    if (!file->data) {
+        root_fs.free_list[slot] = true;
         return FS_ERR_NO_MEMORY;
     }
 
-    // Initialize metadata
-    new_file->size = 0;
-    new_file->is_open = false;
-    new_file->is_dir = false;
-    new_file->parent = current_dir;
-    new_file->position = 0;
-    new_file->permissions = permissions;
-    new_file->inode = root_fs.next_inode++;
-    new_file->created_time = fs_get_time();
-    new_file->modified_time = new_file->created_time;
+    file->size = 0;
+    file->is_open = false;
+    file->is_dir = false;
+    file->parent = current_dir;
+    file->position = 0;
+    file->permissions = permissions;
+    file->inode = root_fs.next_inode++;
+    file->created_time = fs_get_time();
+    file->modified_time = file->created_time;
 
     root_fs.file_count++;
     return FS_SUCCESS;
@@ -280,37 +274,30 @@ size_t fs_read(FileSystem *fs, const char *filename, void *buffer, size_t size) 
 }
 
 size_t fs_write(FileSystem *fs, const char *filename, const void *buffer, size_t size) {
-    (void)fs; // Unused parameter for API compatibility
+    (void)fs;
     if (!buffer || size == 0) return 0;
-    
+
     File *file = fs_find_file(filename);
-    if (!file || !file->is_open || file->is_dir) {
-        return 0;
-    }
-    
-    if (!(file->permissions & FS_PERM_WRITE)) {
-        return 0;
-    }
-    
-    // Check if we need to resize the file
+    if (!file || !file->is_open || file->is_dir) return 0;
+    if (!fs_has_perm(file, FS_PERM_WRITE)) return 0;
+
     size_t required_size = file->position + size;
     if (required_size > file->size) {
-        if (fs_resize_file(file, required_size) != FS_SUCCESS) {
-            // Resize failed, write what we can
-            size_t space_available = file->allocated_size > file->position ? 
-                                   file->allocated_size - file->position : 0;
-            size = size < space_available ? size : space_available;
-            if (size == 0) return 0;
+        int res = fs_resize_file(file, required_size);
+        if (res != FS_SUCCESS) {
+            size_t available = file->allocated_size > file->position ? file->allocated_size - file->position : 0;
+            if (available == 0) return 0;
+            size = size < available ? size : available;
         }
     }
-    
+
     memcpy(file->data + file->position, buffer, size);
     file->position += size;
-    
+
     if (file->position > file->size) {
         file->size = file->position;
     }
-    
+
     file->modified_time = fs_get_time();
     return size;
 }
@@ -413,33 +400,33 @@ int fs_chdir(const char *dirname) {
 
 char* fs_getcwd(char *buffer, size_t size) {
     if (!buffer || size == 0) return NULL;
-    
-    // Build path by walking up the tree
-    char temp_path[PATH_MAX];
-    temp_path[0] = '\0';
-    
+
+    File *dirs[MAX_FILES];
+    size_t depth = 0;
+
     File *dir = current_dir;
-    while (dir != NULL) {
-        if (dir->parent == NULL) {
-            // Root directory
-            if (strlen(temp_path) == 0) {
-                strcpy(temp_path, "/");
-            }
+    while (dir) {
+        dirs[depth++] = dir;
+        dir = dir->parent;
+        if (depth == MAX_FILES) break; // prevent infinite loop
+    }
+
+    // Build path in reverse order
+    size_t pos = 0;
+    for (size_t i = depth; i > 0; i--) {
+        File *d = dirs[i - 1];
+        if (d->parent == NULL) {
+            // root directory
+            if (pos == 0) buffer[pos++] = '/';
             break;
-        } else {
-            // Prepend directory name
-            char new_path[PATH_MAX];
-            snprintf(new_path, sizeof(new_path), "/%s%s", dir->name, temp_path);
-            strcpy(temp_path, new_path);
-            dir = dir->parent;
         }
+        size_t len = strlen(d->name);
+        if (pos + 1 + len >= size) return NULL;
+        buffer[pos++] = '/';
+        memcpy(buffer + pos, d->name, len);
+        pos += len;
     }
-    
-    if (strlen(temp_path) >= size) {
-        return NULL; // Buffer too small
-    }
-    
-    strcpy(buffer, temp_path);
+    buffer[pos] = '\0';
     return buffer;
 }
 

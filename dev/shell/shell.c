@@ -15,6 +15,37 @@ static shell_context_t *g_shell_ctx = NULL;
 extern shell_command_t shell_commands[];
 extern size_t shell_commands_count;
 
+static void int_to_str(int value, char *buf, size_t buf_size) {
+    if (buf_size == 0) return;
+    size_t i = 0;
+    bool negative = false;
+
+    if (value < 0) {
+        negative = true;
+        value = -value;
+    }
+
+    // Convert digits in reverse order
+    do {
+        if (i >= buf_size - 1) break;
+        buf[i++] = '0' + (value % 10);
+        value /= 10;
+    } while (value > 0);
+
+    if (negative && i < buf_size - 1) {
+        buf[i++] = '-';
+    }
+
+    // Reverse the string
+    for (size_t j = 0; j < i / 2; j++) {
+        char tmp = buf[j];
+        buf[j] = buf[i - 1 - j];
+        buf[i - 1 - j] = tmp;
+    }
+
+    buf[i] = '\0';
+}
+
 // Utility function for aligned printing
 void print_padded(const char *text, int width) {
     int len = strlen(text);
@@ -293,71 +324,76 @@ void shell_cleanup(shell_context_t *ctx) {
 
 // Add command to history using TAILQ
 void shell_add_to_history(shell_context_t *ctx, const char *command) {
-    if (strlen(command) == 0) return;
-    
-    // Don't add duplicate consecutive commands
+    size_t cmd_len = strlen(command);
+    if (cmd_len == 0) return;
+
     if (!TAILQ_EMPTY(&ctx->history_head)) {
         history_entry_t *last = TAILQ_LAST(&ctx->history_head, history_head);
         if (strcmp(last->command, command) == 0) {
             return;
         }
     }
-    
-    // Remove oldest entry if we've reached the limit
+
     if (ctx->history_count >= SHELL_HISTORY_SIZE) {
         history_entry_t *oldest = TAILQ_FIRST(&ctx->history_head);
         TAILQ_REMOVE(&ctx->history_head, oldest, entries);
         free(oldest);
         ctx->history_count--;
     }
-    
-    // Allocate new entry
+
     history_entry_t *new_entry = malloc(sizeof(history_entry_t));
-    if (!new_entry) {
-        return; // Memory allocation failed
-    }
-    
-    // Copy command and add to tail
-    strcpy(new_entry->command, command);
+    if (!new_entry) return;
+
+    // Use strncpy to avoid buffer overflow
+    strncpy(new_entry->command, command, SHELL_MAX_INPUT_LENGTH - 1);
+    new_entry->command[SHELL_MAX_INPUT_LENGTH - 1] = '\0';
+
     TAILQ_INSERT_TAIL(&ctx->history_head, new_entry, entries);
     ctx->history_count++;
 }
 
+
 // Navigate command history using TAILQ
 void shell_navigate_history(shell_context_t *ctx, int direction) {
     if (TAILQ_EMPTY(&ctx->history_head)) return;
-    
-    if (direction > 0) { // Up arrow - go to previous command
-        if (ctx->history_current == NULL) {
-            // Start from the last command
+
+    if (direction > 0) {
+        if (!ctx->history_current) {
             ctx->history_current = TAILQ_LAST(&ctx->history_head, history_head);
         } else {
-            // Move to previous command
             history_entry_t *prev = TAILQ_PREV(ctx->history_current, history_head, entries);
-            if (prev != NULL) {
-                ctx->history_current = prev;
-            }
+            if (prev) ctx->history_current = prev;
         }
-    } else { // Down arrow - go to next command
-        if (ctx->history_current != NULL) {
-            history_entry_t *next = TAILQ_NEXT(ctx->history_current, entries);
-            ctx->history_current = next; // Can be NULL (no more commands)
+    } else {
+        if (ctx->history_current) {
+            ctx->history_current = TAILQ_NEXT(ctx->history_current, entries);
         }
     }
-    
-    // Clear current input and load history
-    shell_clear_input_line(ctx);
-    
-    if (ctx->history_current != NULL) {
-        strcpy(ctx->input_buffer, ctx->history_current->command);
+
+    // Erase current input line fully
+    while (ctx->cursor_pos > 0) {
+        vga_putchar('\b');
+        ctx->cursor_pos--;
+    }
+    for (size_t i = 0; i < ctx->input_length; i++) {
+        vga_putchar(' ');
+    }
+    for (size_t i = 0; i < ctx->input_length; i++) {
+        vga_putchar('\b');
+    }
+
+    if (ctx->history_current) {
+        strncpy(ctx->input_buffer, ctx->history_current->command, SHELL_MAX_INPUT_LENGTH - 1);
+        ctx->input_buffer[SHELL_MAX_INPUT_LENGTH - 1] = '\0';
         ctx->input_length = strlen(ctx->input_buffer);
     } else {
         ctx->input_buffer[0] = '\0';
         ctx->input_length = 0;
     }
-    
     ctx->cursor_pos = ctx->input_length;
-    shell_redraw_input(ctx);
+
+    // Output the new line
+    vga_puts(ctx->input_buffer);
 }
 
 // Clear input line on screen
@@ -489,50 +525,21 @@ void shell_run(shell_context_t *ctx) {
 
 // Enhanced prompt with exit status indicator
 void shell_print_prompt(shell_context_t *ctx) {
-    // Show exit status of last command if non-zero
     if (ctx->last_exit_status != 0) {
         vga_puts("[");
-        // Simple integer to string for exit status
-        if (ctx->last_exit_status < 0) {
-            vga_putchar('-');
-            ctx->last_exit_status = -ctx->last_exit_status;
-        }
-        
-        char status_str[12];
-        int digits = 0;
-        int temp = ctx->last_exit_status;
-        if (temp == 0) {
-            status_str[0] = '0';
-            digits = 1;
-        } else {
-            while (temp > 0) {
-                status_str[digits++] = '0' + (temp % 10);
-                temp /= 10;
-            }
-        }
-        
-        // Reverse the string
-        for (int i = 0; i < digits / 2; i++) {
-            char tmp = status_str[i];
-            status_str[i] = status_str[digits - 1 - i];
-            status_str[digits - 1 - i] = tmp;
-        }
-        status_str[digits] = '\0';
-        
-        vga_puts(status_str);
+        int status = ctx->last_exit_status;
+        char buf[12];
+        int_to_str(status, buf, sizeof(buf));
+        vga_puts(buf);
         vga_puts("] ");
     }
 
-        // Set red foreground for "root"
-        vga_set_color(VGA_COLOR_BRIGHT_ORANGE, VGA_COLOR_BLACK);
-        vga_puts("root");
-
-        // Reset color to normal (white on black)
-        vga_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
-
-        vga_puts("@unics:");
-        vga_puts(cwd);
-        vga_puts(" # ");
+    vga_set_color(VGA_COLOR_BRIGHT_ORANGE, VGA_COLOR_BLACK);
+    vga_puts("root");
+    vga_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
+    vga_puts("@unics:");
+    vga_puts(cwd);
+    vga_puts(" # ");
 }
 
 // Process input with improved error handling

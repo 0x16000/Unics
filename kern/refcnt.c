@@ -2,9 +2,6 @@
 #include <sys/refcnt.h>
 #include <stdio.h>
 
-/* Function prototypes */
-unsigned int refcnt_read(struct refcnt *r);
-
 void
 refcnt_init(struct refcnt *r)
 {
@@ -28,31 +25,29 @@ refcnt_take(struct refcnt *r)
 int
 refcnt_rele(struct refcnt *r)
 {
-    if (__sync_sub_and_fetch(&r->r_refs, 1) == 0)
-        return 1;
-    return 0;
+    return (__sync_sub_and_fetch(&r->r_refs, 1) == 0);
 }
 
 void
 refcnt_rele_wake(struct refcnt *r)
 {
     if (refcnt_rele(r)) {
-        /* Add wakeup / cleanup logic here */
+        /* TODO: Add wakeup/cleanup logic */
     }
 }
 
 void
 refcnt_finalize(struct refcnt *r, const char *msg)
 {
-    if (refcnt_read(r) != 0) {
-        printf("refcnt_finalize: %s: refcnt %u still held\n", msg, refcnt_read(r));
-    }
+    unsigned int refs = __sync_add_and_fetch(&r->r_refs, 0);
+    if (refs != 0)
+        printf("refcnt_finalize: %s: refcnt %u still held\n", msg, refs);
 }
 
 int
 refcnt_shared(struct refcnt *r)
 {
-    return (refcnt_read(r) > 1);
+    return (__sync_add_and_fetch(&r->r_refs, 0) > 1);
 }
 
 unsigned int

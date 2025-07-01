@@ -1,5 +1,4 @@
 #include <stdint.h>
-
 #include <sys/pclock.h>
 #include <sys/types.h>
 #include <machine/atomic.h>
@@ -29,12 +28,8 @@ pc_mprod_enter(struct pc_lock *pcl)
 
     for (;;) {
         gen = pcl->pcl_gen;
-
-        if ((gen & 1) == 0) {
-            if (atomic_cas_uint(&pcl->pcl_gen, gen, gen + 1))
-                return gen + 1;
-        }
-        /* Optionally yield CPU or pause */
+        if ((gen & 1) == 0 && atomic_cas_uint(&pcl->pcl_gen, gen, gen + 1))
+            return gen + 1;
     }
 }
 
