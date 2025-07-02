@@ -25,11 +25,7 @@ struct rc4_ctx {
 	u_int8_t state[RC4STATE];
 };
 
-void	rc4_keysetup(struct rc4_ctx *, u_char *, u_int32_t)
-    __attribute__((__bounded__(__buffer__,2,3)));
-void	rc4_crypt(struct rc4_ctx *, u_char *, u_char *, u_int32_t)
-    __attribute__((__bounded__(__buffer__,2,4)))
-    __attribute__((__bounded__(__buffer__,3,4)));
-void	rc4_getbytes(struct rc4_ctx *, u_char *, u_int32_t)
-    __attribute__((__bounded__(__buffer__,2,3)));
+void	rc4_keysetup(struct rc4_ctx *, u_char *, u_int32_t);
+void	rc4_crypt(struct rc4_ctx *, u_char *, u_char *, u_int32_t);
+void	rc4_getbytes(struct rc4_ctx *, u_char *, u_int32_t);
 void	rc4_skip(struct rc4_ctx *, u_int32_t);

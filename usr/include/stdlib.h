@@ -40,9 +40,9 @@ void* realloc(void* ptr, size_t size);
 void free(void* ptr);
 
 // Process control functions
-void abort(void) __attribute__((noreturn));
-void exit(int status) __attribute__((noreturn));
-void _Exit(int status) __attribute__((noreturn));
+void abort(void);
+void exit(int status);
+void _Exit(int status);
 int atexit(void (*function)(void));
 
 // String conversion functions
