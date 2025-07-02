@@ -29,8 +29,8 @@ static kb_state_t kb_state = {0};
 
 // Helper: Wait until input buffer empty (ready to write command)
 static bool wait_input_buffer_empty(void) {
-    const uint8_t max_retries = 10000; // increased retry count for robustness
-    for (uint8_t i = 0; i < max_retries; i++) {
+    const uint16_t max_retries = 10000; // increased retry count for robustness
+    for (uint16_t i = 0; i < max_retries; i++) {
         if ((inb(KB_STATUS_PORT) & 0x02) == 0) return true;
         asm volatile("pause");
     }
@@ -39,8 +39,8 @@ static bool wait_input_buffer_empty(void) {
 
 // Helper: Wait for ACK from keyboard
 static bool wait_for_ack(void) {
-    const uint8_t max_retries = 10000;
-    for (uint8_t i = 0; i < max_retries; i++) {
+    const uint16_t max_retries = 10000;
+    for (uint16_t i = 0; i < max_retries; i++) {
         if (inb(KB_STATUS_PORT) & 0x01) {
             if (inb(KB_DATA_PORT) == 0xFA) return true;
         }
