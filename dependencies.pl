@@ -26,7 +26,7 @@ my %DEPS = (
         base => "base-devel",
         tools => "nasm xorriso grub",
         qemu => "qemu-system-x86",
-        multilib => "lib32-glibc lib32-gcc-libs",
+        multilib => "lib32-glibc lib32-gcc-libs i686-linux-gnu.gcc i686-linux-gnu-ld i686-linux-gnu-objcopy",
         extras => "mtools"
     },
     ubuntu => {
