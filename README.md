@@ -23,7 +23,7 @@ For official Unics bootable images, [get to RELEASE tab](https://github.com/0x16
 | `boot`   | Boot-specific code. |
 | `build`  | Build process artifacts (e.g., `.d` files). |
 | `dev`    | Device driver files (e.g., shell, keyboard, etc.). |
-| `kern`.   | Kernel dtiverd. |
+| `kern`   | Kernel drivers. |
 | `lib`    | Libraries (e.g., C standard library). |
 | `sbin`   | System-dependent software. |
 | `usr`    | User space files (e.g., `include/`, drivers, `sbin/`). |
