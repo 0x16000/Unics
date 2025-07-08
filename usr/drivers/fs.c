@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <sys/_null.h>
 
 // Global filesystem instance
 FileSystem root_fs;
