@@ -85,7 +85,7 @@ bool fs_is_valid_path_char(char c) {
     return (c >= 'a' && c <= 'z') || 
            (c >= 'A' && c <= 'Z') || 
            (c >= '0' && c <= '9') || 
-           c == '-' || c == '_' || c == '.';
+           (c == '-' || c == '_') || c == '.';
 }
 
 File* fs_find_file_in_dir(const char *filename, File *dir) {
