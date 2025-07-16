@@ -34,7 +34,7 @@ int uname_main(int argc, char **argv) {
             return 0;
         } else if (strcmp(argv[i], "-a") == 0) {
             // Print all information
-            printf("%s %s %s %s %s %s\n", OS_NAME, OS_HOSTNAME, OS_VERSION,
+            printf("%s %s %s %s %s %s", OS_NAME, OS_HOSTNAME, OS_VERSION,
                    OS_BUILD_VERSION, OS_ARCH, OS);
             printed_something = 1;
         } else if (strcmp(argv[i], "-s") == 0) {
