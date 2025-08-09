@@ -32,9 +32,6 @@ static const struct multiboot_header multiboot_header __attribute__((used)) = {
     .checksum = -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
 };
 
-extern uint32_t multiboot_info_ptr;
-extern uint32_t __bitmap_start;
-
 struct refcnt ss_refcnt;
 static struct srp ss_srp;
 
@@ -43,8 +40,9 @@ void early_cpu_init(void);
 static void print_banner_and_hardware(void) {
     vga_printf("Unics/i686 0.1-RELEASE #0: %s\n", __DATE__);
     vga_puts(
-        "Copyright (c) 2025 0x16000. All rights reserved.\n\n"
-        "CPU: i686-class processor\n\n"
+        "Copyright (c) 2025 0x16000. All rights reserved.\n"
+        "Booting kernel...\n\n"
+        "cpu0: i686-class processor\n"
         "Initializing display controllers:\n"
         "vga0: <Generic VGA> at port 0x3c0-0x3df iomem 0xa0000-0xbffff\n"
     );
@@ -62,26 +60,25 @@ static void setup_hdmi(void) {
                  ? "hdmi0: connected (1920x1080@60Hz)\n"
                  : "hdmi0: no display connected\n");
     } else {
-        vga_puts("hdmi0: initialization failed (fallback to VGA)\n");
+        vga_puts("hdmi0: init failed, falling back to vga0\n");
     }
     vga_puts("\n");
 }
 
 static void print_device_and_memory_info(void) {
     vga_puts(
-        "Paging: initialization complete\n\n"
+        "Paging: enabled\n"
         "Probing devices:\n"
-        "kbd0 at atkbdc0 (kbd port)\n"
-        "sc0: <System console> at flags 0x100 on isa0\n\n"
+        "kbd0: at atkbdc0 (kbd port)\n"
+        "sc0: <System console> on isa0\n\n"
     );
 }
 
 static void print_root_fs_readme(void) {
     const char *text =
-        "Welcome to Unics and thank you for choosing it!\n"
-        "First edition Unics is the first version of this kernel / operating system.\n"
-        "As said before, for a list of commands run the 'help' command.\n"
-        "Thank you, have a nice day.\n";
+        "Welcome to Unics!\n"
+        "This is the first edition of the Unics kernel / operating system.\n"
+        "Type 'help' for a list of commands.\n";
     fs_write(&root_fs, "README", text, strlen(text));
 }
 
@@ -105,7 +102,7 @@ int main(void) {
 
     early_cpu_init();
 
-    vga_puts("Mounting root from RAM\n");
+    vga_puts("Mounting root filesystem from RAM...\n");
     delay(SHORT_DELAY);
 
     fs_init();
@@ -119,19 +116,17 @@ int main(void) {
     refcnt_init(&ss_refcnt);
     srp_init(&ss_srp);
     vmm_init();
-    vga_puts("vmm: Virtual memory initialized\n");
+    vga_puts("vmm: virtual memory manager online\n");
     delay(SHORT_DELAY);
 
     pmm_init();
     pmm_add_region(0x00100000, 0x07F00000, PMM_ZONE_NORMAL);
-    pmm_add_region(0x00100000, 0x00F00000, PMM_ZONE_DMA);
     pmm_reserve_range(0x00000000, 0x00100000);
-    pmm_reserve_range(0x00100000, 0x00200000);
-    vga_puts("pmm: Physical memory initialized\n");
+    vga_puts("pmm: physical memory manager online\n");
     delay(SHORT_DELAY);
 
     null_init();
-    vga_puts("null: dev/null/ initialized\n");
+    vga_puts("null: /dev/null ready\n");
     delay(SHORT_DELAY);
 
     process_init();
@@ -142,12 +137,13 @@ int main(void) {
     kb_enable_input(true);
     kb_set_boot_complete(true);
 
-    vga_puts("Kernel initialization complete.\n\n");
+    vga_puts("Kernel initialization complete.\n");
     delay(MEDIUM_DELAY);
 
     vga_puts("Starting system services...\n");
     delay(LONG_DELAY);
-    vga_puts("Starting init process\n\n");
+
+    vga_puts("Launching init(8)\n\n");
     delay(MEDIUM_DELAY);
 
     vga_enable_cursor();
@@ -155,12 +151,10 @@ int main(void) {
     login_prompt();
 
     vga_puts(
-        "\nUnics/i686 0.1-RELEASE (GENERIC)\n\n"
+        "\nUnics/i686 0.1-RELEASE (GENERIC)\n"
         "Welcome to Unics!\n\n"
-        "This software is provided \"as is\" without any express or\n"
-        "implied warranties, including, without limitation, the implied\n"
-        "warranties of merchantability and fitness for a particular purpose.\n\n"
-        "Report bugs on GitHub by opening an issue or pull request.\n\n"
+        "This software is provided \"AS IS\" without warranties of any kind.\n"
+        "Report bugs at: https://github.com/0x16000/Unics\n\n"
     );
 
     shell_context_t shell_ctx;
@@ -202,7 +196,7 @@ void early_cpu_init(void) {
 
     if (features.sse) {
         cpu_init_sse();
-        vga_puts("cpu0: SSE extensions enabled\n");
+        vga_puts("cpu0: SSE enabled\n");
         delay(SHORT_DELAY);
     }
 
@@ -218,7 +212,8 @@ void early_cpu_init(void) {
 
     if (features.apic) {
         cpu_enable_smp();
-        vga_puts("cpu0: APIC initialized\n");
+        vga_puts("cpu0: APIC enabled\n");
         delay(SHORT_DELAY);
     }
 }
+
