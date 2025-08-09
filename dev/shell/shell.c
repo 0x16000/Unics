@@ -426,7 +426,7 @@ void shell_redraw_input(shell_context_t *ctx) {
     }
 }
 
-// Enhanced main shell loop with improved input handling
+// Main shell loop
 void shell_run(shell_context_t *ctx) {
     while (ctx->running) {
         shell_print_prompt(ctx);
@@ -435,90 +435,131 @@ void shell_run(shell_context_t *ctx) {
         ctx->input_length = 0;
         ctx->cursor_pos = 0;
         ctx->history_current = NULL;
-        
+        ctx->input_buffer[0] = '\0';
+
         while (true) {
             char c = kb_getchar();
 
-            // Handle Enter key
+            // ENTER key
             if (c == '\n') {
                 vga_putchar('\n');
                 break;
             }
-            
-            // Handle backspace
+
+            // Ctrl+D: exit if line empty
+            else if (c == 4) { // ^D
+                if (ctx->input_length == 0) {
+                    ctx->running = false;
+                    vga_puts("\n");
+                    return;
+                }
+            }
+
+            // Ctrl+C: cancel line
+            else if (c == 3) { // ^C
+                vga_puts("^C\n");
+                ctx->input_length = 0;
+                ctx->cursor_pos = 0;
+                break;
+            }
+
+            // Backspace
             else if (c == '\b' && ctx->cursor_pos > 0) {
-                // Move characters left
+                // Shift chars left
                 for (size_t i = ctx->cursor_pos - 1; i < ctx->input_length - 1; i++) {
                     ctx->input_buffer[i] = ctx->input_buffer[i + 1];
                 }
-                
                 ctx->input_length--;
                 ctx->cursor_pos--;
-                
-                // Redraw line
+
+                // Redraw remainder of line
                 vga_putchar('\b');
                 for (size_t i = ctx->cursor_pos; i < ctx->input_length; i++) {
                     vga_putchar(ctx->input_buffer[i]);
                 }
-                vga_putchar(' ');
-                vga_putchar('\b');
-                
-                // Position cursor
-                for (size_t i = ctx->cursor_pos; i < ctx->input_length; i++) {
+                vga_putchar(' '); // clear leftover char
+                for (size_t i = ctx->cursor_pos; i <= ctx->input_length; i++) {
                     vga_putchar('\b');
                 }
             }
-            
-            // Handle Ctrl+C (interrupt)
-            else if (c == 3) {
-                vga_puts("^C\n");
-                ctx->input_length = 0;
-                break;
-            }
-            
-            // Handle arrow keys (simplified - assumes ANSI escape sequences)
+
+            // Arrow keys & escape sequences
             else if (c == 27) { // ESC
                 char next1 = kb_getchar();
                 char next2 = kb_getchar();
                 if (next1 == '[') {
-                    if (next2 == 'A') { // Up arrow
-                        shell_navigate_history(ctx, 1);
-                    } else if (next2 == 'B') { // Down arrow
+                    if (next2 == 'A') { // Up
+                        shell_navigate_history(ctx, +1);
+                    }
+                    else if (next2 == 'B') { // Down
                         shell_navigate_history(ctx, -1);
                     }
-                    // Note: Left/Right arrow support could be added here
+                    else if (next2 == 'C') { // Right
+                        if (ctx->cursor_pos < ctx->input_length) {
+                            vga_putchar(ctx->input_buffer[ctx->cursor_pos]);
+                            ctx->cursor_pos++;
+                        }
+                    }
+                    else if (next2 == 'D') { // Left
+                        if (ctx->cursor_pos > 0) {
+                            vga_putchar('\b');
+                            ctx->cursor_pos--;
+                        }
+                    }
                 }
             }
-            
-            // Handle regular character input
-            else if (c >= 32 && c <= 126 && ctx->input_length < SHELL_MAX_INPUT_LENGTH - 1) {
-                // Insert character at cursor position
+
+            // Tab completion placeholder
+            else if (c == '\t') {
+                // TODO: Implement command/file completion
+            }
+
+            // Printable characters
+            else if (c >= 32 && c <= 126 &&
+                     ctx->input_length < SHELL_MAX_INPUT_LENGTH - 1) {
+                // Insert at cursor
                 for (size_t i = ctx->input_length; i > ctx->cursor_pos; i--) {
                     ctx->input_buffer[i] = ctx->input_buffer[i - 1];
                 }
-                
                 ctx->input_buffer[ctx->cursor_pos] = c;
                 ctx->input_length++;
                 ctx->cursor_pos++;
-                
-                // Redraw from cursor position
+
+                // Draw inserted char + rest of line
                 for (size_t i = ctx->cursor_pos - 1; i < ctx->input_length; i++) {
                     vga_putchar(ctx->input_buffer[i]);
                 }
-                
-                // Position cursor correctly
+                // Move cursor back if not at end
                 for (size_t i = ctx->cursor_pos; i < ctx->input_length; i++) {
                     vga_putchar('\b');
                 }
             }
         }
 
-        // Null-terminate and process input
+        // Null-terminate
         ctx->input_buffer[ctx->input_length] = '\0';
-        
+
         if (ctx->input_length > 0) {
             shell_add_to_history(ctx, ctx->input_buffer);
-            shell_process_input(ctx);
+
+            // Tokenize safely
+            char *argv[SHELL_MAX_ARGS];
+            int argc = 0;
+            char *p = ctx->input_buffer;
+            while (*p && argc < SHELL_MAX_ARGS - 1) {
+                // Skip leading spaces
+                while (*p == ' ' || *p == '\t') p++;
+                if (!*p) break;
+                argv[argc++] = p;
+                // Find end of token
+                while (*p && *p != ' ' && *p != '\t') p++;
+                if (*p) *p++ = '\0';
+            }
+            argv[argc] = NULL;
+
+            if (argc > 0) {
+                ctx->last_exit_status = shell_execute(ctx, argc, argv);
+            }
         }
     }
 }
