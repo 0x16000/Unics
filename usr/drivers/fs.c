@@ -221,12 +221,12 @@ int fs_open(FileSystem *fs, const char *filename) {
         return FS_ERR_NOT_FOUND;
     }
 
-    if (file->is_open) {
-        return FS_ERR_FILE_OPEN;
-    }
-    
     if (file->is_dir) {
         return FS_ERR_INVALID_PATH;
+    }
+    
+    if (file->is_open) {
+        return FS_ERR_FILE_OPEN;
     }
 
     file->is_open = true;
